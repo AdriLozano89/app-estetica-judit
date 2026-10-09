@@ -244,13 +244,15 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
     if tel_clean and len(tel_clean) == 9 and not tel_clean.startswith("34"):
         tel_clean = f"34{tel_clean}"
         
-    linea_1 = f"Hola {nombre_cliente}! ✨"
-    linea_2 = f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*."
-    linea_3 = "Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
+    texto_raw = (
+        f"Hola {nombre_cliente}! ✨\n\n"
+        f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
+        f"para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*.\n\n"
+        f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
+    )
     
-    texto_completo = f"{linea_1}\n\n{linea_2}\n\n{linea_3}"
-    texto_encoded = urllib.parse.quote_plus(texto_completo.encode('utf-8'))
-    return f"https://wa.me/{tel_clean}?text={texto_encoded}"
+    texto_encoded = urllib.parse.quote(texto_raw, encoding='utf-8')
+    return f"https://api.whatsapp.com/send?phone={tel_clean}&text={texto_encoded}"
 
 # Estilos CSS
 st.markdown("""
@@ -318,7 +320,7 @@ st.markdown("""
         box-shadow: 0px 4px 12px rgba(0,0,0,0.6);
     }
 
-    .stButton>button {
+    .stButton>button, .stLinkButton>a {
         background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%) !important;
         color: #000000 !important;
         font-family: 'Montserrat', sans-serif !important;
@@ -328,6 +330,7 @@ st.markdown("""
         border-radius: 6px !important;
         border: none !important;
         box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;
+        text-decoration: none !important;
     }
 
     h1, h2, h3, h4, .stHeaderTitle {
@@ -592,13 +595,7 @@ def modal_editar_elemento(item_id, es_bloqueo=False):
 
     if cli_tel:
         url_wa = generar_link_whatsapp(cli_tel, cli_nom, fecha_c.strftime("%d/%m/%Y"), hora_c.strftime("%H:%M"), serv_nom)
-        st.markdown(f'''
-            <a href="{url_wa}" target="_blank" style="text-decoration:none;">
-                <button style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color:white; border:none; padding:10px 16px; border-radius:6px; font-weight:600; font-family:'Montserrat', sans-serif; cursor:pointer; width:100%; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                    📲 Enviar Recordatorio por WhatsApp
-                </button>
-            </a>
-        ''', unsafe_allow_html=True)
+        st.link_button("📲 Enviar Recordatorio por WhatsApp", url_wa, use_container_width=True)
     else:
         st.info("💡 Este cliente no tiene número de teléfono registrado para enviar WhatsApp.")
 
