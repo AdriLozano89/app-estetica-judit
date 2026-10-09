@@ -159,7 +159,6 @@ def init_db():
                         fecha_fin TEXT NOT NULL,
                         motivo TEXT)''')
 
-    # Tabla para el control de la caja del día
     cursor.execute('''CREATE TABLE IF NOT EXISTS cajas (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         fecha TEXT UNIQUE NOT NULL,
@@ -250,7 +249,8 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
         f"para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*. "
         f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
     )
-    mensaje_encoded = urllib.parse.quote(mensaje)
+    
+    mensaje_encoded = urllib.parse.quote(mensaje.encode('utf-8'))
     return f"https://wa.me/{tel_clean}?text={mensaje_encoded}"
 
 # Estilos CSS
@@ -861,7 +861,6 @@ elif opcion == "👤 Clientes":
 
     st.write(f"**Total Clientes Registrados:** {len(df_c)}")
 
-    # Visualización con botón de edición por cada cliente
     for idx, row in df_c.head(50).iterrows():
         col_c1, col_c2, col_c3, col_c4 = st.columns([3, 2, 2, 1])
         with col_c1:
@@ -889,7 +888,6 @@ elif opcion == "💳 Caja":
     if not caja_hoy:
         caja_hoy = (0.0, 0.0, 0.0, 0.0, 0.0, 'Cerrada')
 
-    # Alerta superior
     if caja_hoy[5] == 'Cerrada':
         st.warning("⚠️ **Atención Judit:** Caja del día sin abrir")
 
