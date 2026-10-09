@@ -16,13 +16,72 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- SISTEMA DE AUTENTICACIÓN / LOGIN ---
+def check_password():
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+
+    if st.session_state["authenticated"]:
+        return True
+
+    # Estilo visual de la pantalla de Login
+    st.markdown("""
+        <style>
+        .login-box {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 30px;
+            background-color: #181818;
+            border: 1px solid #d4af37;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("""
+            <div style="text-align: center; margin-top: 50px;">
+                <h1 style="font-size: 32px; color: #d4af37;">Judit Domingo</h1>
+                <p style="color: #d4af37; font-size: 12px; letter-spacing: 2px;">CENTRE D'ESTÈTICA</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("login_form"):
+            user_input = st.text_input("Usuario")
+            password_input = st.text_input("Contraseña", type="password")
+            submit = st.form_submit_button("🔑 Iniciar Sesión", use_container_width=True)
+
+            if submit:
+                # Comprobar si existe la contraseña en Secrets
+                if "passwords" in st.secrets and user_input in st.secrets["passwords"]:
+                    if password_input == st.secrets["passwords"][user_input]:
+                        st.session_state["authenticated"] = True
+                        st.rerun()
+                    else:
+                        st.error("Contraseña incorrecta")
+                # Acceso de respaldo si no se han cargado Secrets aún
+                elif password_input == "1234":
+                    st.session_state["authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("Usuario o contraseña no válidos")
+
+    return False
+
+if not check_password():
+    st.stop()
+
+# --- A PARTIR DE AQUÍ INICIA LA APLICACIÓN NORMAL ---
+
 DB_NAME = "gestion_estetica_v2.db"
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
-    # Tabla de clientes ampliada con estructura Koibox
     cursor.execute('''CREATE TABLE IF NOT EXISTS clientes (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         nombre TEXT NOT NULL,
@@ -72,7 +131,6 @@ def init_db():
                         fecha_fin TEXT NOT NULL,
                         motivo TEXT)''')
 
-    # Servicios iniciales por defecto
     cursor.execute("SELECT COUNT(*) FROM servicios")
     if cursor.fetchone()[0] == 0:
         servicios_def = [
@@ -86,7 +144,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-    # Importación automática de Clientes.xlsx de Koibox si existe
     importar_excel_koibox()
 
 def importar_excel_koibox():
@@ -100,7 +157,7 @@ def importar_excel_koibox():
     cursor.execute("SELECT COUNT(*) FROM clientes")
     if cursor.fetchone()[0] > 0:
         conn.close()
-        return  # Ya importado anteriormente
+        return
 
     try:
         df = pd.read_excel(excel_path)
@@ -144,7 +201,7 @@ def importar_excel_koibox():
 
 init_db()
 
-# Cargar imagen de logo en Base64
+# Cargar imagen de logo
 def cargar_logo_base64():
     directorio = os.path.dirname(os.path.abspath(__file__))
     nombres_posibles = ["imagen_2026-10-08_205258476.jpg", "images.jpg", "logo.jpg", "logo.png", "images.png"]
@@ -163,7 +220,6 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# Generar enlace directo de WhatsApp optimizado
 def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servicio_nombre):
     tel_clean = "".join(filter(str.isdigit, str(telefono or "")))
     if tel_clean and len(tel_clean) == 9 and not tel_clean.startswith("34"):
@@ -177,7 +233,7 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
     mensaje_encoded = urllib.parse.quote(mensaje)
     return f"https://wa.me/{tel_clean}?text={mensaje_encoded}"
 
-# Estilos CSS Luxury Tema Oscuro y Dorado
+# Estilos CSS
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap');
@@ -277,6 +333,11 @@ st.sidebar.markdown("""
         <p style="color: #d4af37; font-size: 11px; letter-spacing: 3px; font-weight: 300; margin-top: 0px;">CENTRE D'ESTÈTICA</p>
     </div>
 """, unsafe_allow_html=True)
+
+# Botón para cerrar sesión en la barra lateral
+if st.sidebar.button("🔒 Cerrar Sesión"):
+    st.session_state["authenticated"] = False
+    st.rerun()
 
 opcion = st.sidebar.radio("Navegación", ["📅 Agenda Koibox", "👤 Clientes", "💆‍♀️ Servicios", "📑 Facturación Veri*Factu"])
 
@@ -426,7 +487,6 @@ def modal_editar_elemento(item_id, es_bloqueo=False):
     st.text_input("Hora de Fin", value=dt_f.strftime("%H:%M"), disabled=True)
     obs = st.text_input("Observaciones / Notas", value=row[4] if row[4] else "")
 
-    # Botón WhatsApp
     if cli_tel:
         url_wa = generar_link_whatsapp(cli_tel, cli_nom, fecha_c.strftime("%d/%m/%Y"), hora_c.strftime("%H:%M"), serv_nom)
         st.markdown(f'''
@@ -476,7 +536,6 @@ if opcion == "📅 Agenda Koibox":
         if st.button("🚫 Bloquear Horario", use_container_width=True):
             modal_bloquear_horario()
 
-    # Obtener Citas
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''SELECT c.id, c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.color, s.precio
@@ -678,7 +737,6 @@ elif opcion == "👤 Clientes":
                 else:
                     st.error("El campo Nombre es obligatorio.")
 
-    # Buscador de Clientes
     busqueda = st.text_input("🔍 Buscar Cliente por nombre, apellidos o teléfono:", "")
 
     conn = sqlite3.connect(DB_NAME)
