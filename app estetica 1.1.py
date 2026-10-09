@@ -45,7 +45,6 @@ def check_password():
     if st.session_state["authenticated"]:
         return True
 
-    # Estilos de la pantalla de login con logo
     st.markdown("""
         <style>
         .login-logo-container {
@@ -69,7 +68,6 @@ def check_password():
     with col2:
         st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
         
-        # Logo grande si existe
         if logo_data_uri:
             st.markdown(f"""
                 <div class="login-logo-container">
@@ -107,8 +105,7 @@ def check_password():
 if not check_password():
     st.stop()
 
-# --- A PARTIR DE AQUÍ INICIA LA APLICACIÓN NORMAL ---
-
+# --- BASE DE DATOS E INICIALIZACIÓN ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -161,6 +158,17 @@ def init_db():
                         fecha_inicio TEXT NOT NULL,
                         fecha_fin TEXT NOT NULL,
                         motivo TEXT)''')
+
+    # Tabla para el control de la caja del día
+    cursor.execute('''CREATE TABLE IF NOT EXISTS cajas (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        fecha TEXT UNIQUE NOT NULL,
+                        abonos_efectivo REAL DEFAULT 0.0,
+                        ingresos REAL DEFAULT 0.0,
+                        extracciones REAL DEFAULT 0.0,
+                        descuadre REAL DEFAULT 0.0,
+                        total_caja REAL DEFAULT 0.0,
+                        estado TEXT DEFAULT 'Cerrada')''')
 
     cursor.execute("SELECT COUNT(*) FROM servicios")
     if cursor.fetchone()[0] == 0:
@@ -335,6 +343,14 @@ st.markdown("""
         border: 1px solid #333333 !important;
         border-radius: 6px !important;
     }
+    
+    .caja-card {
+        background-color: #181818;
+        border: 1px solid #2d2d2d;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -350,7 +366,7 @@ if st.sidebar.button("🔒 Cerrar Sesión"):
     st.session_state["authenticated"] = False
     st.rerun()
 
-opcion = st.sidebar.radio("Navegación", ["📅 Agenda Koibox", "👤 Clientes", "💆‍♀️ Servicios", "📑 Facturación Veri*Factu"])
+opcion = st.sidebar.radio("Navegación", ["📅 Agenda Koibox", "👤 Clientes", "💳 Caja", "💆‍♀️ Servicios", "📑 Facturación Veri*Factu"])
 
 if logo_data_uri:
     st.sidebar.markdown(f"""
@@ -359,7 +375,7 @@ if logo_data_uri:
         </div>
     """, unsafe_allow_html=True)
 
-# DIÁLOGO EMERGENTE PARA CREAR CITA CON BUSCADOR EN BLANCO
+# DIÁLOGO EMERGENTE PARA CREAR CITA
 @st.dialog("📅 Nueva Cita")
 def modal_nueva_cita(default_date=None, default_time=None):
     conn = sqlite3.connect(DB_NAME)
@@ -372,8 +388,6 @@ def modal_nueva_cita(default_date=None, default_time=None):
         return
 
     df_cli['nombre_completo'] = df_cli['nombre'] + " " + df_cli['primer_apellido'].fillna('')
-
-    # Crear lista de opciones con un valor inicial en blanco
     opciones_clientes = [None] + list(df_cli["id"])
 
     def format_cli(x):
@@ -418,6 +432,70 @@ def modal_nueva_cita(default_date=None, default_time=None):
             conn.close()
             st.success("¡Cita reservada!")
             st.rerun()
+
+# DIÁLOGO EMERGENTE PARA EDITAR CLIENTE EXISTENTE
+@st.dialog("✏️ Editar Ficha de Cliente")
+def modal_editar_cliente(cliente_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""SELECT nombre, primer_apellido, segundo_apellido, sexo, telefono, telefono_fijo, email,
+                             dni, direccion, ciudad, cp, fecha_nacimiento, notas, info_clinica 
+                      FROM clientes WHERE id = ?""", (cliente_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        st.error("No se encontró el cliente.")
+        return
+
+    tab1, tab2, tab3 = st.tabs(["DATOS BÁSICOS", "DATOS FISCALES Y DIRECCIÓN", "NOTAS Y CLÍNICA"])
+
+    with st.form("form_editar_cliente"):
+        with tab1:
+            c1, c2, c3 = st.columns(3)
+            with c1: e_nom = st.text_input("Nombre *", value=row[0] or "")
+            with c2: e_p_ap = st.text_input("Primer Apellido", value=row[1] or "")
+            with c3: e_s_ap = st.text_input("Segundo Apellido", value=row[2] or "")
+
+            c4, c5, c6 = st.columns(3)
+            idx_sexo = 0
+            if row[3] in ["Mujer", "m"]: idx_sexo = 1
+            elif row[3] in ["Hombre", "h"]: idx_sexo = 2
+            with c4: e_sexo = st.selectbox("Sexo", ["", "Mujer", "Hombre"], index=idx_sexo)
+            with c5: e_tel_m = st.text_input("Teléfono Móvil", value=row[4] or "")
+            with c6: e_tel_f = st.text_input("Teléfono Fijo", value=row[5] or "")
+            
+            e_email = st.text_input("Email", value=row[6] or "")
+
+        with tab2:
+            d1, d2 = st.columns(2)
+            with d1: e_dni = st.text_input("Documento Identidad (DNI/NIE)", value=row[7] or "")
+            with d2: e_f_nac = st.text_input("Fecha Nacimiento (DD/MM/AAAA)", value=row[11] or "")
+
+            e_dir = st.text_input("Dirección", value=row[8] or "")
+            d3, d4 = st.columns(2)
+            with d3: e_ciudad = st.text_input("Ciudad", value=row[9] or "")
+            with d4: e_cp = st.text_input("Código Postal", value=row[10] or "")
+
+        with tab3:
+            e_notas = st.text_area("Notas Generales", value=row[12] or "")
+            e_clinica = st.text_area("Información Clínica (Alergias, Piel, etc.)", value=row[13] or "")
+
+        if st.form_submit_button("💾 Guardar Cambios del Cliente", use_container_width=True, type="primary"):
+            if e_nom:
+                conn = sqlite3.connect(DB_NAME)
+                cursor = conn.cursor()
+                cursor.execute("""UPDATE clientes SET
+                    nombre=?, primer_apellido=?, segundo_apellido=?, sexo=?, telefono=?, telefono_fijo=?, email=?,
+                    dni=?, direccion=?, ciudad=?, cp=?, fecha_nacimiento=?, notas=?, info_clinica=?
+                    WHERE id=?""", (
+                    e_nom, e_p_ap, e_s_ap, e_sexo, e_tel_m, e_tel_f, e_email,
+                    e_dni, e_dir, e_ciudad, e_cp, e_f_nac, e_notas, e_clinica, cliente_id
+                ))
+                conn.commit()
+                conn.close()
+                st.success("Ficha de cliente actualizada con éxito.")
+                st.rerun()
 
 # DIÁLOGO EMERGENTE PARA BLOQUEAR HORARIO
 @st.dialog("🚫 Bloquear Horario / Día")
@@ -710,7 +788,7 @@ if opcion == "📅 Agenda Koibox":
             cita_id = int(raw_id.replace("cita_", ""))
             modal_editar_elemento(cita_id, es_bloqueo=False)
 
-# 2. CLIENTES CON PESTAÑAS Y BUSCADOR
+# 2. CLIENTES CON EDICIÓN EN POP-UP Y BUSCADOR
 elif opcion == "👤 Clientes":
     st.subheader("Fichero de Clientes")
 
@@ -782,9 +860,76 @@ elif opcion == "👤 Clientes":
     conn.close()
 
     st.write(f"**Total Clientes Registrados:** {len(df_c)}")
-    st.dataframe(df_c, use_container_width=True)
 
-# 3. SERVICIOS
+    # Visualización con botón de edición por cada cliente
+    for idx, row in df_c.head(50).iterrows():
+        col_c1, col_c2, col_c3, col_c4 = st.columns([3, 2, 2, 1])
+        with col_c1:
+            st.markdown(f"**{row['Nombre Completo']}**")
+        with col_c2:
+            st.caption(f"📱 {row['Móvil'] or 'Sin teléfono'}")
+        with col_c3:
+            st.caption(f"📍 {row['Ciudad'] or 'N/D'}")
+        with col_c4:
+            if st.button("✏️ Editar", key=f"edit_cli_{row['ID']}"):
+                modal_editar_cliente(row['ID'])
+        st.markdown("<hr style='margin: 4px 0; border-color: #2d2d2d;'>", unsafe_allow_html=True)
+
+# 3. MÓDULO DE CAJA (ESTILO KOIBOX)
+elif opcion == "💳 Caja":
+    st.subheader("Caja del Día")
+
+    hoy_str = datetime.date.today().strftime("%Y-%m-%d")
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT abonos_efectivo, ingresos, extracciones, descuadre, total_caja, estado FROM cajas WHERE fecha = ?", (hoy_str,))
+    caja_hoy = cursor.fetchone()
+    conn.close()
+
+    if not caja_hoy:
+        caja_hoy = (0.0, 0.0, 0.0, 0.0, 0.0, 'Cerrada')
+
+    # Alerta superior
+    if caja_hoy[5] == 'Cerrada':
+        st.warning("⚠️ **Atención Judit:** Caja del día sin abrir")
+
+    col_k1, col_k2, col_k3, col_k4 = st.columns(4)
+    with col_k1:
+        st.markdown("<div class='caja-card'><h3>🔓 Apertura</h3><p>Gestión de inicio del día</p></div>", unsafe_allow_html=True)
+        if st.button("Abrir / Modificar Caja", use_container_width=True):
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute("INSERT OR REPLACE INTO cajas (fecha, estado) VALUES (?, 'Abierta')", (hoy_str,))
+            conn.commit()
+            conn.close()
+            st.success("Caja abierta para el día de hoy.")
+            st.rerun()
+
+    with col_k2:
+        st.markdown(f"<div class='caja-card'><h3>👁️ Resumen</h3><p><strong>{caja_hoy[4]:.2f}€</strong> Total</p></div>", unsafe_allow_html=True)
+
+    with col_k3:
+        st.markdown(f"<div class='caja-card'><h3>🔍 Ingresos</h3><p><strong>{caja_hoy[1]:.2f}€</strong> Ventas</p></div>", unsafe_allow_html=True)
+
+    with col_k4:
+        st.markdown(f"<div class='caja-card'><h3>↔️ Extracciones</h3><p><strong>{caja_hoy[2]:.2f}€</strong> Retirado</p></div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### Histórico de Cajas Diarias")
+
+    conn = sqlite3.connect(DB_NAME)
+    df_cajas = pd.read_sql_query("""SELECT fecha as 'Fecha', 
+                                          PRINTF('%.2f€', abonos_efectivo) as 'Abonos Efectivo', 
+                                          PRINTF('%.2f€', ingresos) as 'Ingresos', 
+                                          PRINTF('%.2f€', extracciones) as 'Extracciones', 
+                                          PRINTF('%.2f€', descuadre) as 'Descuadre', 
+                                          PRINTF('%.2f€', total_caja) as 'Caja' 
+                                   FROM cajas ORDER BY fecha DESC""", conn)
+    conn.close()
+
+    st.dataframe(df_cajas, use_container_width=True)
+
+# 4. SERVICIOS
 elif opcion == "💆‍♀️ Servicios":
     st.subheader("Catálogo de Tratamientos")
     with st.form("nuevo_servicio", clear_on_submit=True):
@@ -808,7 +953,7 @@ elif opcion == "💆‍♀️ Servicios":
     conn.close()
     st.dataframe(df_s, use_container_width=True)
 
-# 4. FACTURACIÓN
+# 5. FACTURACIÓN
 elif opcion == "📑 Facturación Veri*Factu":
     st.subheader("Facturación Expedida (Estándar Veri*Factu)")
     if st.button("⚡ Emitir Factura de Prueba"):
