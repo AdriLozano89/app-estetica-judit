@@ -244,14 +244,13 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
     if tel_clean and len(tel_clean) == 9 and not tel_clean.startswith("34"):
         tel_clean = f"34{tel_clean}"
         
-    mensaje = (
-        f"Hola {nombre_cliente}! ✨ Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
-        f"para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*. "
-        f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
-    )
+    linea_1 = f"Hola {nombre_cliente}! ✨"
+    linea_2 = f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*."
+    linea_3 = "Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
     
-    mensaje_encoded = urllib.parse.quote(mensaje.encode('utf-8'))
-    return f"https://wa.me/{tel_clean}?text={mensaje_encoded}"
+    texto_completo = f"{linea_1}\n\n{linea_2}\n\n{linea_3}"
+    texto_encoded = urllib.parse.quote_plus(texto_completo.encode('utf-8'))
+    return f"https://wa.me/{tel_clean}?text={texto_encoded}"
 
 # Estilos CSS
 st.markdown("""
