@@ -16,7 +16,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- SISTEMA DE AUTENTICACIÓN / LOGIN ---
+DB_NAME = "gestion_estetica_v2.db"
+
+# Función para cargar el logo en Base64
+def cargar_logo_base64():
+    directorio = os.path.dirname(os.path.abspath(__file__))
+    nombres_posibles = ["imagen_2026-10-08_205258476.jpg", "images.jpg", "logo.jpg", "logo.png", "images.png"]
+    
+    for nombre in nombres_posibles:
+        ruta_completa = os.path.join(directorio, nombre)
+        if os.path.exists(ruta_completa):
+            try:
+                with open(ruta_completa, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode()
+                    mime_type = "image/png" if nombre.endswith(".png") else "image/jpeg"
+                    return f"data:{mime_type};base64,{encoded_string}"
+            except Exception:
+                pass
+    return None
+
+logo_data_uri = cargar_logo_base64()
+
+# --- SISTEMA DE AUTENTICACIÓN / LOGIN CON LOGO GRANDE ---
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
@@ -24,28 +45,42 @@ def check_password():
     if st.session_state["authenticated"]:
         return True
 
-    # Estilo visual de la pantalla de Login
+    # Estilos de la pantalla de login con logo
     st.markdown("""
         <style>
-        .login-box {
-            max-width: 400px;
-            margin: 80px auto;
-            padding: 30px;
-            background-color: #181818;
-            border: 1px solid #d4af37;
+        .login-logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .login-logo-container img {
+            width: 100%;
+            max-width: 220px;
+            height: auto;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-            text-align: center;
+            border: 1px solid #d4af37;
+            box-shadow: 0px 4px 15px rgba(212, 175, 55, 0.3);
         }
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
+        st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
+        
+        # Logo grande si existe
+        if logo_data_uri:
+            st.markdown(f"""
+                <div class="login-logo-container">
+                    <img src="{logo_data_uri}" alt="Judit Domingo Centre d'Estètica">
+                </div>
+            """, unsafe_allow_html=True)
+            
         st.markdown("""
-            <div style="text-align: center; margin-top: 50px;">
-                <h1 style="font-size: 32px; color: #d4af37;">Judit Domingo</h1>
-                <p style="color: #d4af37; font-size: 12px; letter-spacing: 2px;">CENTRE D'ESTÈTICA</p>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="font-size: 28px; color: #d4af37; margin-bottom: 0px;">Judit Domingo</h1>
+                <p style="color: #d4af37; font-size: 11px; letter-spacing: 3px; font-weight: 300; margin-top: 2px;">CENTRE D'ESTÈTICA</p>
             </div>
         """, unsafe_allow_html=True)
 
@@ -55,14 +90,12 @@ def check_password():
             submit = st.form_submit_button("🔑 Iniciar Sesión", use_container_width=True)
 
             if submit:
-                # Comprobar si existe la contraseña en Secrets
                 if "passwords" in st.secrets and user_input in st.secrets["passwords"]:
                     if password_input == st.secrets["passwords"][user_input]:
                         st.session_state["authenticated"] = True
                         st.rerun()
                     else:
                         st.error("Contraseña incorrecta")
-                # Acceso de respaldo si no se han cargado Secrets aún
                 elif password_input == "1234":
                     st.session_state["authenticated"] = True
                     st.rerun()
@@ -75,8 +108,6 @@ if not check_password():
     st.stop()
 
 # --- A PARTIR DE AQUÍ INICIA LA APLICACIÓN NORMAL ---
-
-DB_NAME = "gestion_estetica_v2.db"
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
@@ -201,25 +232,6 @@ def importar_excel_koibox():
 
 init_db()
 
-# Cargar imagen de logo
-def cargar_logo_base64():
-    directorio = os.path.dirname(os.path.abspath(__file__))
-    nombres_posibles = ["imagen_2026-10-08_205258476.jpg", "images.jpg", "logo.jpg", "logo.png", "images.png"]
-    
-    for nombre in nombres_posibles:
-        ruta_completa = os.path.join(directorio, nombre)
-        if os.path.exists(ruta_completa):
-            try:
-                with open(ruta_completa, "rb") as image_file:
-                    encoded_string = base64.b64encode(image_file.read()).decode()
-                    mime_type = "image/png" if nombre.endswith(".png") else "image/jpeg"
-                    return f"data:{mime_type};base64,{encoded_string}"
-            except Exception:
-                pass
-    return None
-
-logo_data_uri = cargar_logo_base64()
-
 def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servicio_nombre):
     tel_clean = "".join(filter(str.isdigit, str(telefono or "")))
     if tel_clean and len(tel_clean) == 9 and not tel_clean.startswith("34"):
@@ -334,7 +346,6 @@ st.sidebar.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Botón para cerrar sesión en la barra lateral
 if st.sidebar.button("🔒 Cerrar Sesión"):
     st.session_state["authenticated"] = False
     st.rerun()
@@ -348,11 +359,11 @@ if logo_data_uri:
         </div>
     """, unsafe_allow_html=True)
 
-# DIÁLOGO EMERGENTE PARA CREAR CITA
+# DIÁLOGO EMERGENTE PARA CREAR CITA CON BUSCADOR EN BLANCO
 @st.dialog("📅 Nueva Cita")
 def modal_nueva_cita(default_date=None, default_time=None):
     conn = sqlite3.connect(DB_NAME)
-    df_cli = pd.read_sql_query("SELECT id, nombre, primer_apellido, telefono FROM clientes", conn)
+    df_cli = pd.read_sql_query("SELECT id, nombre, primer_apellido, telefono FROM clientes ORDER BY nombre ASC", conn)
     df_serv = pd.read_sql_query("SELECT id, nombre, duracion_min, precio FROM servicios", conn)
     conn.close()
 
@@ -362,6 +373,18 @@ def modal_nueva_cita(default_date=None, default_time=None):
 
     df_cli['nombre_completo'] = df_cli['nombre'] + " " + df_cli['primer_apellido'].fillna('')
 
+    # Crear lista de opciones con un valor inicial en blanco
+    opciones_clientes = [None] + list(df_cli["id"])
+
+    def format_cli(x):
+        if x is None:
+            return "🔍 Selecciona / Busca un cliente..."
+        row = df_cli[df_cli['id'] == x]
+        if not row.empty:
+            tel = f" ({row['telefono'].values[0]})" if row['telefono'].values[0] else ""
+            return f"{row['nombre_completo'].values[0]}{tel}"
+        return ""
+
     f_val = default_date if default_date else datetime.date.today()
     h_val = default_time if default_time else datetime.time(9, 0)
 
@@ -370,7 +393,7 @@ def modal_nueva_cita(default_date=None, default_time=None):
         fecha_c = st.date_input("Fecha", f_val)
         hora_c = st.time_input("Hora de Inicio (24h)", h_val)
     with col2:
-        cli_sel = st.selectbox("Cliente", options=df_cli["id"], format_func=lambda x: f"{df_cli[df_cli['id']==x]['nombre_completo'].values[0]}")
+        cli_sel = st.selectbox("Buscar / Seleccionar Cliente *", options=opciones_clientes, format_func=format_cli, index=0)
         serv_sel = st.selectbox("Servicio / Tratamiento", options=df_serv["id"], format_func=lambda x: f"{df_serv[df_serv['id']==x]['nombre'].values[0]} ({df_serv[df_serv['id']==x]['duracion_min'].values[0]} min - {df_serv[df_serv['id']==x]['precio'].values[0]}€)")
 
     dur_min = int(df_serv[df_serv["id"]==serv_sel]["duracion_min"].values[0])
@@ -381,17 +404,20 @@ def modal_nueva_cita(default_date=None, default_time=None):
     obs = st.text_input("Observaciones / Notas")
 
     if st.button("💾 Guardar Cita", use_container_width=True, type="primary"):
-        str_i = dt_i.strftime("%Y-%m-%dT%H:%M:%S")
-        str_f = dt_f.strftime("%Y-%m-%dT%H:%M:%S")
-        
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO citas (fecha_inicio, fecha_fin, cliente_id, servicio_id, notas) VALUES (?,?,?,?,?)",
-                       (str_i, str_f, int(cli_sel), int(serv_sel), obs))
-        conn.commit()
-        conn.close()
-        st.success("¡Cita reservada!")
-        st.rerun()
+        if cli_sel is None:
+            st.error("⚠️ Por favor, busca y selecciona un cliente de la lista antes de guardar.")
+        else:
+            str_i = dt_i.strftime("%Y-%m-%dT%H:%M:%S")
+            str_f = dt_f.strftime("%Y-%m-%dT%H:%M:%S")
+            
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO citas (fecha_inicio, fecha_fin, cliente_id, servicio_id, notas) VALUES (?,?,?,?,?)",
+                           (str_i, str_f, int(cli_sel), int(serv_sel), obs))
+            conn.commit()
+            conn.close()
+            st.success("¡Cita reservada!")
+            st.rerun()
 
 # DIÁLOGO EMERGENTE PARA BLOQUEAR HORARIO
 @st.dialog("🚫 Bloquear Horario / Día")
@@ -451,7 +477,7 @@ def modal_editar_elemento(item_id, es_bloqueo=False):
     cursor.execute("SELECT fecha_inicio, fecha_fin, cliente_id, servicio_id, notas FROM citas WHERE id = ?", (item_id,))
     row = cursor.fetchone()
     
-    df_cli = pd.read_sql_query("SELECT id, nombre, primer_apellido, telefono FROM clientes", conn)
+    df_cli = pd.read_sql_query("SELECT id, nombre, primer_apellido, telefono FROM clientes ORDER BY nombre ASC", conn)
     df_serv = pd.read_sql_query("SELECT id, nombre, duracion_min, precio FROM servicios", conn)
     conn.close()
 
