@@ -320,7 +320,8 @@ st.markdown("""
         box-shadow: 0px 4px 12px rgba(0,0,0,0.6);
     }
 
-    .stButton>button, .stLinkButton>a {
+    /* Botones estándar dorados */
+    .stButton>button {
         background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%) !important;
         color: #000000 !important;
         font-family: 'Montserrat', sans-serif !important;
@@ -330,7 +331,23 @@ st.markdown("""
         border-radius: 6px !important;
         border: none !important;
         box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;
+    }
+
+    /* Botón verde oficial de WhatsApp */
+    .stLinkButton>a {
+        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+        color: #ffffff !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        padding: 10px 18px !important;
+        border-radius: 6px !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5) !important;
         text-decoration: none !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
     h1, h2, h3, h4, .stHeaderTitle {
@@ -368,7 +385,7 @@ if st.sidebar.button("🔒 Cerrar Sesión"):
     st.session_state["authenticated"] = False
     st.rerun()
 
-opcion = st.sidebar.radio("Navegación", ["📅 Agenda Koibox", "👤 Clientes", "💳 Caja", "💆‍♀️ Servicios", "📑 Facturación Veri*Factu"])
+opcion = st.sidebar.radio("Navegación", ["📅 Agenda Koibox", "👤 Clientes", "💳 Caja", "📣 Marketing", "💆‍♀️ Servicios", "📑 Facturación Veri*Factu"])
 
 if logo_data_uri:
     st.sidebar.markdown(f"""
@@ -870,7 +887,7 @@ elif opcion == "👤 Clientes":
                 modal_editar_cliente(row['ID'])
         st.markdown("<hr style='margin: 4px 0; border-color: #2d2d2d;'>", unsafe_allow_html=True)
 
-# 3. MÓDULO DE CAJA (ESTILO KOIBOX)
+# 3. MÓDULO DE CAJA
 elif opcion == "💳 Caja":
     st.subheader("Caja del Día")
 
@@ -923,7 +940,45 @@ elif opcion == "💳 Caja":
 
     st.dataframe(df_cajas, use_container_width=True)
 
-# 4. SERVICIOS
+# 4. MÓDULO DE MARKETING & FIDELIZACIÓN (NUEVO)
+elif opcion == "📣 Marketing":
+    st.subheader("Marketing & Fidelización de Clientes")
+
+    m_tab1, m_tab2, m_tab3 = st.tabs(["📲 CAMPANAS WHATSAPP", "⭐ RESEÑAS GOOGLE", "🎁 BONOS Y TARJETAS REGALO"])
+
+    with m_tab1:
+        st.markdown("#### Enviar Promoción o Aviso Masivo por WhatsApp")
+        msg_promo = st.text_area("Mensaje Promocional", "✨ ¡Hola! En Judit Domingo Centre d'Estètica tenemos una promoción especial esta semana. ¡Reserva tu cita!")
+        
+        conn = sqlite3.connect(DB_NAME)
+        df_m = pd.read_sql_query("SELECT id, nombre, primer_apellido, telefono FROM clientes WHERE telefono IS NOT NULL AND telefono != ''", conn)
+        conn.close()
+
+        st.caption(f"Clientes con teléfono móvil registrado: {len(df_m)}")
+        if not df_m.empty:
+            cli_m_sel = st.selectbox("Seleccionar Cliente para enviar promoción", options=df_m["id"], format_func=lambda x: f"{df_m[df_m['id']==x]['nombre'].values[0]} ({df_m[df_m['id']==x]['telefono'].values[0]})")
+            tel_p = df_m[df_m["id"]==cli_m_sel]["telefono"].values[0]
+            
+            url_p = f"https://api.whatsapp.com/send?phone=34{tel_p}&text={urllib.parse.quote(msg_promo, encoding='utf-8')}"
+            st.link_button("📲 Abrir WhatsApp con esta Promoción", url_p, use_container_width=True)
+
+    with m_tab2:
+        st.markdown("#### Solicitar Reseña en Google Business Profile")
+        st.info("Pide valoraciones de 5 estrellas a tus clientas satisfechas para posicionar el centro en Google Maps.")
+        link_google = st.text_input("Enlace de Reseñas de Google Maps:", "https://g.page/r/JuditDomingoEstetica/review")
+        
+        msg_google = f"¡Hola! Muchas gracias por confiar en Judit Domingo Centre d'Estètica. ✨ Te agradeceríamos muchísimo si nos dejas una breve valoración en Google: {link_google}"
+        url_g = f"https://api.whatsapp.com/send?text={urllib.parse.quote(msg_google, encoding='utf-8')}"
+        st.link_button("⭐ Enviar Petición de Reseña por WhatsApp", url_g, use_container_width=True)
+
+    with m_tab3:
+        st.markdown("#### Gestión de Bonos y Cheques Regalo")
+        b1, b2, b3 = st.columns(3)
+        with b1: st.metric("Bonos Activos", "14")
+        with b2: st.metric("Tarjetas Regalo Emitidas", "8")
+        with b3: st.metric("Valor Total Bonos", "420,00 €")
+
+# 5. SERVICIOS
 elif opcion == "💆‍♀️ Servicios":
     st.subheader("Catálogo de Tratamientos")
     with st.form("nuevo_servicio", clear_on_submit=True):
@@ -947,7 +1002,7 @@ elif opcion == "💆‍♀️ Servicios":
     conn.close()
     st.dataframe(df_s, use_container_width=True)
 
-# 5. FACTURACIÓN
+# 6. FACTURACIÓN
 elif opcion == "📑 Facturación Veri*Factu":
     st.subheader("Facturación Expedida (Estándar Veri*Factu)")
     if st.button("⚡ Emitir Factura de Prueba"):
