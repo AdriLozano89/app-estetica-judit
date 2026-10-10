@@ -42,7 +42,7 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# Estilos CSS con Tipografía "Cuqui" (Comfortaa + Quicksand) y Diseño Dulce / Elegante
+# Estilos CSS con Tipografía Cuqui (Comfortaa + Quicksand)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
@@ -98,12 +98,6 @@ st.markdown("""
         border-radius: 20px !important;
         border: none !important;
         box-shadow: 0 4px 12px rgba(230, 197, 102, 0.25) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(230, 197, 102, 0.4) !important;
     }
 
     .stLinkButton>a {
@@ -127,10 +121,7 @@ st.markdown("""
         font-weight: 500 !important;
     }
 
-    /* Pestañas estilo Cuqui */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
     .stTabs [data-baseweb="tab"] {
         border-radius: 15px 15px 0px 0px !important;
         padding: 10px 18px !important;
@@ -321,8 +312,104 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
     texto_raw = (
         f"Hola {nombre_cliente}! ✨\n\n"
         f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
-        f"para el servicio de *{servicio_nombre}* el día *{
-    # 1. AGENDA INTERACTIVA CON POP-UP DE CITAS
+        f"para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*.\n\n"
+        f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
+    )
+    return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_raw, encoding='utf-8')}"
+
+@st.dialog("⚙️ Detalle de Cita")
+def modal_editar_cita(cita_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""SELECT c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado, c.notas
+                      FROM citas c 
+                      JOIN clientes cl ON c.cliente_id = cl.id 
+                      JOIN servicios s ON c.servicio_id = s.id 
+                      WHERE c.id = ?""", (cita_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        st.error("No se encontró la cita.")
+        return
+
+    f_i, f_f, cl_n, cl_ap, cl_tel, s_n, s_pre, est_c, met_p, monto_c, obs = row
+    nom_cli = f"{cl_n} {cl_ap or ''}".strip()
+    dt_i = datetime.datetime.fromisoformat(f_i)
+
+    st.markdown(f"### 💆‍♀️ {s_n}")
+    st.markdown(f"👤 **Cliente:** {nom_cli}")
+    st.markdown(f"📅 **Fecha:** {dt_i.strftime('%d/%m/%Y')} a las {dt_i.strftime('%H:%M')}h")
+    if obs: st.info(f"📝 **Notas:** {obs}")
+
+    st.markdown("---")
+    if est_c == "Cobrado":
+        st.success(f"✅ **Cobrado:** {monto_c:.2f}€ en {met_p}")
+    else:
+        st.warning(f"⏳ **Cobro Pendiente:** {s_pre:.2f}€")
+        if st.button("💶 Cobrar Servicio Ahora", use_container_width=True):
+            modal_cobrar_cita(cita_id, nom_cli, s_n, s_pre)
+
+    if cl_tel:
+        url_wa = generar_link_whatsapp(cl_tel, nom_cli, dt_i.strftime("%d/%m/%Y"), dt_i.strftime("%H:%M"), s_n)
+        st.link_button("📲 Enviar Recordatorio por WhatsApp", url_wa, use_container_width=True)
+
+    if st.button("🗑️ Eliminar Cita", use_container_width=True):
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM citas WHERE id = ?", (cita_id,))
+        conn.commit()
+        conn.close()
+        st.success("Cita eliminada.")
+        st.rerun()
+
+@st.dialog("💶 Cobrar Servicio del Día")
+def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
+    st.markdown(f"**Cliente:** {cliente_nom}")
+    st.markdown(f"**Servicio:** {servicio_nom}")
+    
+    col1, col2 = st.columns(2)
+    with col1: monto = st.number_input("Importe (€)", value=float(precio_defecto), step=1.0)
+    with col2: metodo = st.selectbox("Método de Pago", ["Efectivo", "Tarjeta", "Bizum", "Tarjeta Regalo"])
+
+    if st.button("✅ Confirmar Cobro", use_container_width=True, type="primary"):
+        hoy_str = datetime.date.today().strftime("%Y-%m-%d")
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        
+        cursor.execute("UPDATE citas SET estado_cobro='Cobrado', metodo_pago=?, monto_cobrado=? WHERE id=?", (metodo, monto, cita_id))
+        
+        if metodo != "Tarjeta Regalo":
+            cursor.execute("SELECT id, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja FROM cajas WHERE fecha=?", (hoy_str,))
+            row_caja = cursor.fetchone()
+            
+            if row_caja:
+                c_id, ef, tar, biz, ing, tot = row_caja
+                cursor.execute("UPDATE cajas SET abonos_efectivo=?, abonos_tarjeta=?, abonos_bizum=?, ingresos=?, total_caja=?, estado='Abierta' WHERE id=?",
+                               (ef + (monto if metodo == "Efectivo" else 0),
+                                tar + (monto if metodo == "Tarjeta" else 0),
+                                biz + (monto if metodo == "Bizum" else 0),
+                                ing + monto, tot + monto, c_id))
+            else:
+                cursor.execute("INSERT INTO cajas (fecha, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja, estado) VALUES (?,?,?,?,?,?,'Abierta')",
+                               (hoy_str, monto if metodo == "Efectivo" else 0, monto if metodo == "Tarjeta" else 0, monto if metodo == "Bizum" else 0, monto, monto))
+
+        cursor.execute("SELECT hash_registro FROM facturas ORDER BY id DESC LIMIT 1")
+        last_row = cursor.fetchone()
+        hash_ant = last_row[0] if last_row else "00000000000000000000000000000000"
+        num_f = f"F{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+        fecha_h = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        cadena = f"{num_f}|{fecha_h}|{monto:.2f}|{hash_ant}"
+        hash_reg = hashlib.sha256(cadena.encode('utf-8')).hexdigest()
+        
+        cursor.execute("INSERT INTO facturas (num_factura, fecha_hora, concepto, total, metodo_pago, hash_registro) VALUES (?,?,?,?,?,?)",
+                       (num_f, fecha_h, f"{servicio_nom} - {cliente_nom}", monto, metodo, hash_reg))
+
+        conn.commit()
+        conn.close()
+        st.success("¡Cobro registrado!")
+        st.rerun()
+        # 1. AGENDA INTERACTIVA
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -359,7 +446,6 @@ with opcion[0]:
 
     state = calendar(events=events, options=cal_options, key="koibox_cal_main")
 
-    # DETECTOR DE CLIC EN CITA
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
         if raw_id.startswith("cita_"):
@@ -432,11 +518,11 @@ with opcion[2]:
     st.markdown("---")
     c_m1, c_m2, c_m3 = st.columns(3)
     with c_m1:
-        st.markdown("<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{:.2f} €</h2><p>Repercutido - Soportado</p></div>".format(iva_a_pagar), unsafe_allow_html=True)
+        st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{iva_a_pagar:.2f} €</h2><p>Repercutido - Soportado</p></div>", unsafe_allow_html=True)
     with c_m2:
-        st.markdown("<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{:.2f} €</h2><p>20% s/ Rendimiento Neto</p></div>".format(irpf_estimado), unsafe_allow_html=True)
+        st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_estimado:.2f} €</h2><p>20% s/ Rendimiento Neto</p></div>", unsafe_allow_html=True)
     with c_m3:
-        st.markdown("<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{:.2f} €</h2><p>Ingresos - Gastos Totales</p></div>".format(rendimiento_neto), unsafe_allow_html=True)
+        st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2><p>Ingresos - Gastos Totales</p></div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("📊 Exportar Informe Oficial para la Gestoría (.CSV / Excel)", use_container_width=True):
