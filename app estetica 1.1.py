@@ -42,7 +42,7 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# CSS Limpio para Móvil (Elimina negritas y suaviza la interfaz)
+# CSS Limpio para Móvil
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600&family=Quicksand:wght@300;400;500&display=swap');
@@ -103,7 +103,7 @@ st.markdown("""
         border: none !important;
     }
 
-    /* CALENDARIO: FUENTE LIGERA SIN NEGRITAS EMPASTADAS */
+    /* CALENDARIO */
     .fc {
         font-size: 11px !important;
         font-family: 'Quicksand', sans-serif !important;
@@ -146,7 +146,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS COMPLETA ---
+# --- BASE DE DATOS E INICIALIZACIÓN ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -293,7 +293,7 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# --- MENÚ DE NAVEGACIÓN PRINCIPAL ---
+# --- MENÚ DE NAVEGACIÓN ---
 opcion = st.tabs([
     "📅 Agenda", 
     "💳 Caja & Cobros", 
@@ -314,7 +314,7 @@ def generar_link_whatsapp(telefono, texto_mensaje):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# MODAL PARA NUEVA CITA
+# MODAL NUEVA CITA
 @st.dialog("➕ Agendar Nueva Cita")
 def modal_crear_cita(fecha_hora_inicio):
     conn = sqlite3.connect(DB_NAME)
@@ -356,7 +356,7 @@ def modal_crear_cita(fecha_hora_inicio):
         st.success("¡Cita agendada correctamente!")
         st.rerun()
 
-# MODAL DETALLE CITA CON BOTÓN WHATSAPP GARANTIZADO
+# MODAL DETALLE CITA
 @st.dialog("⚙️ Detalle de Cita")
 def modal_editar_cita(cita_id):
     conn = sqlite3.connect(DB_NAME)
@@ -391,7 +391,6 @@ def modal_editar_cita(cita_id):
         if st.button("💶 Cobrar Servicio Ahora", use_container_width=True):
             modal_cobrar_cita(cita_id, nom_cli, s_n, s_pre)
 
-    # BOTÓN WHATSAPP SIEMPRE VISIBLE SI HAY TELÉFONO
     if cl_tel and str(cl_tel).strip() != "":
         txt_wa = (
             f"Hola {nom_cli}! ✨\n\n"
@@ -502,7 +501,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v5")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v6")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -597,7 +596,7 @@ with opcion[2]:
         df_top_cli.columns = ["Clienta", "Total Gastado (€)"]
         st.dataframe(df_top_cli, use_container_width=True)
 
-# 4. MARKETING & FIDELIZACIÓN COMPLETO
+# 4. MARKETING & FIDELIZACIÓN COMPLETO (CORREGIDO ERROR PANDAS SQL)
 with opcion[3]:
     st.subheader("📣 Módulo de Marketing y Fidelización")
 
@@ -607,19 +606,21 @@ with opcion[3]:
         st.markdown("### 🎂 Próximos Cumpleaños")
         mes_actual = datetime.date.today().strftime("%m")
         conn = sqlite3.connect(DB_NAME)
-        df_cump = pd.read_sql_query("SELECT nombre || ' ' || COALESCE(primer_apellido,'') as nom, telefono, fecha_nacimiento FROM clientes WHERE fecha_nacimiento LIKE ?", (f"%-{mes_actual}-%",), conn)
+        cursor = conn.cursor()
+        cursor.execute("SELECT nombre || ' ' || COALESCE(primer_apellido,''), telefono, fecha_nacimiento FROM clientes WHERE fecha_nacimiento LIKE ?", (f"%-{mes_actual}-%",))
+        cump_rows = cursor.fetchall()
         conn.close()
 
-        if df_cump.empty:
+        if not cump_rows:
             st.info("No hay cumpleaños registrados para este mes.")
         else:
-            for _, r in df_cump.iterrows():
+            for nom_c, tel_c, fnac_c in cump_rows:
                 col1, col2 = st.columns([3, 1])
-                with col1: st.markdown(f"🎉 **{r['nom']}** ({r['fecha_nacimiento']})")
+                with col1: st.markdown(f"🎉 **{nom_c}** ({fnac_c})")
                 with col2:
-                    if r['telefono']:
-                        msg_cump = f"¡Feliz Cumpleaños {r['nom']}! 🥳✨ Desde Judit Domingo Centre d'Estètica te deseamos un gran día. ¡Tienes un 10% de descuento en tu próximo tratamiento como regalo!"
-                        url_cump = generar_link_whatsapp(r['telefono'], msg_cump)
+                    if tel_c:
+                        msg_cump = f"¡Feliz Cumpleaños {nom_c}! 🥳✨ Desde Judit Domingo Centre d'Estètica te deseamos un gran día. ¡Tienes un 10% de descuento en tu próximo tratamiento como regalo!"
+                        url_cump = generar_link_whatsapp(tel_c, msg_cump)
                         st.link_button("📲 Felicitar", url_cump, use_container_width=True)
 
     with tab_m2:
@@ -731,4 +732,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-        
+    
