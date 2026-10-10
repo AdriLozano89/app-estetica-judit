@@ -42,18 +42,18 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# Estilos CSS Avanzados
+# Estilos CSS con Tipografía "Cuqui" (Comfortaa + Quicksand) y Diseño Dulce / Elegante
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
 
     section[data-testid="stSidebar"] { display: none !important; }
     header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
 
     html, body, [class*="css"], .stApp {
-        background-color: #0d0d0d !important;
-        color: #e5e5e5 !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: #0f0e13 !important;
+        color: #f3effa !important;
+        font-family: 'Quicksand', sans-serif !important;
     }
 
     .block-container {
@@ -63,64 +63,91 @@ st.markdown("""
     }
 
     h1, h2, h3, .brand-title {
-        font-family: 'Playfair Display', serif !important;
-        color: #d4af37 !important;
+        font-family: 'Comfortaa', cursive !important;
+        color: #e6c566 !important;
         letter-spacing: 0.5px !important;
     }
 
     .brand-subtext {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 10px;
-        color: #a89047;
+        font-family: 'Quicksand', sans-serif;
+        font-size: 11px;
+        color: #d4af37;
         letter-spacing: 3px;
-        margin-top: -4px;
+        margin-top: -2px;
         text-transform: uppercase;
+        font-weight: 600;
     }
 
     .card-metric {
-        background: linear-gradient(145deg, #181818 0%, #111111 100%);
-        border: 1px solid #333333;
-        border-left: 4px solid #d4af37;
-        border-radius: 10px;
-        padding: 15px 20px;
+        background: linear-gradient(145deg, #191724 0%, #12101a 100%);
+        border: 1px solid #332d42;
+        border-left: 5px solid #e6c566;
+        border-radius: 16px;
+        padding: 18px 22px;
         text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
     .stButton>button {
-        background: linear-gradient(135deg, #d4af37 0%, #997819 100%) !important;
-        color: #000000 !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        font-weight: 600 !important;
+        background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%) !important;
+        color: #1a1600 !important;
+        font-family: 'Comfortaa', cursive !important;
+        font-weight: 700 !important;
         font-size: 13px !important;
-        padding: 8px 18px !important;
-        border-radius: 8px !important;
+        padding: 8px 20px !important;
+        border-radius: 20px !important;
         border: none !important;
-        box-shadow: 0 3px 8px rgba(212, 175, 55, 0.25) !important;
+        box-shadow: 0 4px 12px rgba(230, 197, 102, 0.25) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(230, 197, 102, 0.4) !important;
     }
 
     .stLinkButton>a {
         background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
         color: #ffffff !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        font-weight: 600 !important;
+        font-family: 'Comfortaa', cursive !important;
+        font-weight: 700 !important;
         font-size: 13px !important;
-        padding: 8px 16px !important;
-        border-radius: 8px !important;
+        padding: 8px 18px !important;
+        border-radius: 20px !important;
         border: none !important;
         text-decoration: none !important;
     }
 
     .stTextInput>div>div>input, .stSelectbox>div>div, .stDateInput>div>div>input, .stTimeInput>div>div>input, .stTextArea>div>div>textarea {
-        background-color: #1a1a1a !important;
+        background-color: #191724 !important;
         color: #ffffff !important;
-        border: 1px solid #333333 !important;
-        border-radius: 8px !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        border: 1px solid #332d42 !important;
+        border-radius: 12px !important;
+        font-family: 'Quicksand', sans-serif !important;
+        font-weight: 500 !important;
+    }
+
+    /* Pestañas estilo Cuqui */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 15px 15px 0px 0px !important;
+        padding: 10px 18px !important;
+        background-color: #161420 !important;
+        color: #bfa8db !important;
+        font-family: 'Comfortaa', cursive !important;
+        font-size: 13px !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #241f33 !important;
+        color: #e6c566 !important;
+        font-weight: 700 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS CON MIGRACIÓN COMPLETA (CITAS, CAJAS Y FACTURAS) ---
+# --- BASE DE DATOS E INICIALIZACIÓN ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -163,7 +190,6 @@ def init_db():
                         FOREIGN KEY(cliente_id) REFERENCES clientes(id),
                         FOREIGN KEY(servicio_id) REFERENCES servicios(id))''')
 
-    # MIGRADOR TABLA CITAS
     cursor.execute("PRAGMA table_info(citas)")
     cols_citas = [c[1] for c in cursor.fetchall()]
     if "estado_cobro" not in cols_citas:
@@ -185,7 +211,6 @@ def init_db():
                         total_caja REAL DEFAULT 0.0,
                         estado TEXT DEFAULT 'Cerrada')''')
 
-    # MIGRADOR TABLA CAJAS
     cursor.execute("PRAGMA table_info(cajas)")
     cols_cajas = [c[1] for c in cursor.fetchall()]
     if "abonos_tarjeta" not in cols_cajas:
@@ -202,7 +227,6 @@ def init_db():
                         metodo_pago TEXT,
                         hash_registro TEXT)''')
 
-    # MIGRADOR TABLA FACTURAS
     cursor.execute("PRAGMA table_info(facturas)")
     cols_fact = [c[1] for c in cursor.fetchall()]
     if "metodo_pago" not in cols_fact:
@@ -261,13 +285,13 @@ def init_db():
 
 init_db()
 
-# --- HEADER SUPERIOR ELEGANTE ---
+# --- HEADER SUPERIOR ---
 col_h1, col_h2 = st.columns([8, 2])
 with col_h1:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 15px;">
             <div>
-                <div class="brand-title" style="font-size: 26px; font-weight:600; line-height:1.1;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 28px; font-weight:700; line-height:1.1;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
@@ -297,58 +321,8 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
     texto_raw = (
         f"Hola {nombre_cliente}! ✨\n\n"
         f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
-        f"para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*.\n\n"
-        f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
-    )
-    return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_raw, encoding='utf-8')}"
-
-@st.dialog("💶 Cobrar Servicio del Día")
-def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
-    st.markdown(f"**Cliente:** {cliente_nom}")
-    st.markdown(f"**Servicio:** {servicio_nom}")
-    
-    col1, col2 = st.columns(2)
-    with col1: monto = st.number_input("Importe (€)", value=float(precio_defecto), step=1.0)
-    with col2: metodo = st.selectbox("Método de Pago", ["Efectivo", "Tarjeta", "Bizum", "Tarjeta Regalo"])
-
-    if st.button("✅ Confirmar Cobro", use_container_width=True, type="primary"):
-        hoy_str = datetime.date.today().strftime("%Y-%m-%d")
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        
-        cursor.execute("UPDATE citas SET estado_cobro='Cobrado', metodo_pago=?, monto_cobrado=? WHERE id=?", (metodo, monto, cita_id))
-        
-        if metodo != "Tarjeta Regalo":
-            cursor.execute("SELECT id, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja FROM cajas WHERE fecha=?", (hoy_str,))
-            row_caja = cursor.fetchone()
-            
-            if row_caja:
-                c_id, ef, tar, biz, ing, tot = row_caja
-                cursor.execute("UPDATE cajas SET abonos_efectivo=?, abonos_tarjeta=?, abonos_bizum=?, ingresos=?, total_caja=?, estado='Abierta' WHERE id=?",
-                               (ef + (monto if metodo == "Efectivo" else 0),
-                                tar + (monto if metodo == "Tarjeta" else 0),
-                                biz + (monto if metodo == "Bizum" else 0),
-                                ing + monto, tot + monto, c_id))
-            else:
-                cursor.execute("INSERT INTO cajas (fecha, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja, estado) VALUES (?,?,?,?,?,?,'Abierta')",
-                               (hoy_str, monto if metodo == "Efectivo" else 0, monto if metodo == "Tarjeta" else 0, monto if metodo == "Bizum" else 0, monto, monto))
-
-        cursor.execute("SELECT hash_registro FROM facturas ORDER BY id DESC LIMIT 1")
-        last_row = cursor.fetchone()
-        hash_ant = last_row[0] if last_row else "00000000000000000000000000000000"
-        num_f = f"F{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
-        fecha_h = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        cadena = f"{num_f}|{fecha_h}|{monto:.2f}|{hash_ant}"
-        hash_reg = hashlib.sha256(cadena.encode('utf-8')).hexdigest()
-        
-        cursor.execute("INSERT INTO facturas (num_factura, fecha_hora, concepto, total, metodo_pago, hash_registro) VALUES (?,?,?,?,?,?)",
-                       (num_f, fecha_h, f"{servicio_nom} - {cliente_nom}", monto, metodo, hash_reg))
-
-        conn.commit()
-        conn.close()
-        st.success("¡Cobro registrado!")
-        st.rerun()
-        # 1. AGENDA
+        f"para el servicio de *{servicio_nombre}* el día *{
+    # 1. AGENDA INTERACTIVA CON POP-UP DE CITAS
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -371,7 +345,26 @@ with opcion[0]:
             "borderColor": color
         })
 
-    calendar(events=events, options={"initialView": "timeGridWeek", "firstDay": 1, "slotMinTime": "08:00:00", "slotMaxTime": "20:30:00"}, key="koibox_cal")
+    cal_options = {
+        "initialView": "timeGridWeek",
+        "firstDay": 1,
+        "slotMinTime": "08:00:00",
+        "slotMaxTime": "20:30:00",
+        "headerToolbar": {
+            "left": "prev,next today",
+            "center": "title",
+            "right": "timeGridWeek,timeGridDay,dayGridMonth"
+        }
+    }
+
+    state = calendar(events=events, options=cal_options, key="koibox_cal_main")
+
+    # DETECTOR DE CLIC EN CITA
+    if state.get("eventClick"):
+        raw_id = state["eventClick"]["event"]["id"]
+        if raw_id.startswith("cita_"):
+            c_id = int(raw_id.replace("cita_", ""))
+            modal_editar_cita(c_id)
 
 # 2. CAJA & COBROS
 with opcion[1]:
@@ -439,11 +432,11 @@ with opcion[2]:
     st.markdown("---")
     c_m1, c_m2, c_m3 = st.columns(3)
     with c_m1:
-        st.markdown("<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#d4af37;'>{:.2f} €</h2><p>Repercutido - Soportado</p></div>".format(iva_a_pagar), unsafe_allow_html=True)
+        st.markdown("<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{:.2f} €</h2><p>Repercutido - Soportado</p></div>".format(iva_a_pagar), unsafe_allow_html=True)
     with c_m2:
-        st.markdown("<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#3498db;'>{:.2f} €</h2><p>20% s/ Rendimiento Neto</p></div>".format(irpf_estimado), unsafe_allow_html=True)
+        st.markdown("<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{:.2f} €</h2><p>20% s/ Rendimiento Neto</p></div>".format(irpf_estimado), unsafe_allow_html=True)
     with c_m3:
-        st.markdown("<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#2ecc71;'>{:.2f} €</h2><p>Ingresos - Gastos Totales</p></div>".format(rendimiento_neto), unsafe_allow_html=True)
+        st.markdown("<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{:.2f} €</h2><p>Ingresos - Gastos Totales</p></div>".format(rendimiento_neto), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("📊 Exportar Informe Oficial para la Gestoría (.CSV / Excel)", use_container_width=True):
@@ -570,3 +563,4 @@ with opcion[7]:
     df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
     conn.close()
     st.dataframe(df_serv, use_container_width=True)
+    
