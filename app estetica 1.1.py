@@ -44,7 +44,7 @@ logo_data_uri = cargar_logo_base64()
 
 # GESTIÓN DE SESIÓN Y AUTENTICACIÓN
 if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = True  # Por defecto activo
+    st.session_state["authenticated"] = True
 
 # ESTILOS CSS CON MARCA DE AGUA EN FONDO (25% OPACIDAD)
 css_logo_fondo = ""
@@ -504,8 +504,28 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
                 cursor.execute("UPDATE cajas SET abonos_efectivo=?, abonos_tarjeta=?, abonos_bizum=?, ingresos=?, total_caja=?, estado='Abierta' WHERE id=?",
                                (ef + (monto if metodo == "Efectivo" else 0),
                                 tar + (monto if metodo == "Tarjeta" else 0),
-                                biz + (monto if metodo == "Bizum" else 0)
-                                # 1. AGENDA
+                                biz + (monto if metodo == "Bizum" else 0),
+                                ing + monto, tot + monto, c_id))
+            else:
+                cursor.execute("INSERT INTO cajas (fecha, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja, estado) VALUES (?,?,?,?,?,?,'Abierta')",
+                               (hoy_str, monto if metodo == "Efectivo" else 0, monto if metodo == "Tarjeta" else 0, monto if metodo == "Bizum" else 0, monto, monto))
+
+        cursor.execute("SELECT hash_registro FROM facturas ORDER BY id DESC LIMIT 1")
+        last_row = cursor.fetchone()
+        hash_ant = last_row[0] if last_row else "00000000000000000000000000000000"
+        num_f = f"F{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+        fecha_h = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        cadena = f"{num_f}|{fecha_h}|{monto:.2f}|{hash_ant}"
+        hash_reg = hashlib.sha256(cadena.encode('utf-8')).hexdigest()
+        
+        cursor.execute("INSERT INTO facturas (num_factura, fecha_hora, concepto, total, metodo_pago, hash_registro) VALUES (?,?,?,?,?,?)",
+                       (num_f, fecha_h, f"{servicio_nom} - {cliente_nom}", monto, metodo, hash_reg))
+
+        conn.commit()
+        conn.close()
+        st.success("¡Cobro registrado!")
+        st.rerun()
+# 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -550,7 +570,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v11")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v12")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -802,4 +822,3 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-                
