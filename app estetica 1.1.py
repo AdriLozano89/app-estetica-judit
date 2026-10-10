@@ -334,8 +334,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-
-# 1. AGENDA
+        # 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -446,4 +445,115 @@ with opcion[3]:
         with st.form("form_gasto"):
             col1, col2 = st.columns(2)
             with col1: prov = st.text_input("Proveedor (Ej. Iberdrola, Almacén Cosmética)")
-            with col2: cat = st.selectbox("Categoría", ["Suministros (Luz/Agua/Teléfono)", "Productos Cosméticos", "Gest
+            with col2: cat = st.selectbox("Categoría", ["Suministros (Luz/Agua/Teléfono)", "Productos Cosméticos", "Gestoría/Seguros", "Otros"])
+
+            concept = st.text_input("Concepto Factura")
+            col3, col4 = st.columns(2)
+            with col3: base = st.number_input("Base Imponible (€)", value=0.0, step=5.0)
+            with col4: iva = st.selectbox("IVA %", [21.0, 10.0, 4.0, 0.0])
+
+            foto = st.file_uploader("📷 Subir Foto o PDF de la Factura", type=["jpg", "png", "pdf"])
+
+            if st.form_submit_button("💾 Guardar Gasto"):
+                if prov and base > 0:
+                    ruta = None
+                    if foto:
+                        nom_f = f"gasto_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{foto.name.split('.')[-1]}"
+                        ruta = os.path.join(GASTOS_DIR, nom_f)
+                        with open(ruta, "wb") as f: f.write(foto.getbuffer())
+
+                    tot = base * (1 + (iva / 100))
+                    conn = sqlite3.connect(DB_NAME)
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO gastos (fecha, proveedor, concepto, categoria, base_imponible, iva_porcentaje, total, ruta_factura) VALUES (?,?,?,?,?,?,?,?)",
+                                   (datetime.date.today().strftime("%Y-%m-%d"), prov, concept, cat, base, iva, tot, ruta))
+                    conn.commit()
+                    conn.close()
+                    st.success("Gasto registrado.")
+                    st.rerun()
+
+    conn = sqlite3.connect(DB_NAME)
+    df_g = pd.read_sql_query("SELECT fecha as 'Fecha', proveedor as 'Proveedor', concepto as 'Concepto', base_imponible as 'Base (€)', total as 'Total (€)' FROM gastos ORDER BY fecha DESC", conn)
+    conn.close()
+    st.dataframe(df_g, use_container_width=True)
+
+# 5. STOCK TOP
+with opcion[4]:
+    st.subheader("📦 Control de Stock Seleccionado (Productos Top & Cabina)")
+
+    with st.expander("➕ Añadir Producto al Inventario", expanded=False):
+        with st.form("form_stock"):
+            col1, col2 = st.columns(2)
+            with col1: nom_prod = st.text_input("Nombre del Producto *")
+            with col2: cat_prod = st.selectbox("Tipo", ["Producto Venta Clienta", "Uso Cabina / Tratamiento"])
+
+            col3, col4, col5 = st.columns(3)
+            with col3: coste = st.number_input("Precio Coste (€)", value=0.0)
+            with col4: pvp = st.number_input("PVP Venta (€)", value=0.0)
+            with col5: unidades = st.number_input("Unidades en Stock", value=5, step=1)
+
+            if st.form_submit_button("💾 Guardar Producto"):
+                if nom_prod:
+                    conn = sqlite3.connect(DB_NAME)
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO stock (nombre, categoria, precio_coste, pvp, unidades) VALUES (?,?,?,?,?)",
+                                   (nom_prod, cat_prod, coste, pvp, unidades))
+                    conn.commit()
+                    conn.close()
+                    st.success("Producto añadido.")
+                    st.rerun()
+
+    conn = sqlite3.connect(DB_NAME)
+    df_st = pd.read_sql_query("SELECT id, nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
+    conn.close()
+    st.dataframe(df_st, use_container_width=True)
+
+# 6. MARKETING & REGALOS
+with opcion[5]:
+    st.subheader("📣 Gestor de Tarjetas Regalo y Promociones")
+    
+    with st.expander("🎁 Emitir Nueva Tarjeta Regalo", expanded=True):
+        with st.form("form_tr"):
+            cod_tr = f"REGALO-{random.randint(1000, 9999)}"
+            st.text_input("Código de la Tarjeta", value=cod_tr, disabled=True)
+            
+            c1, c2 = st.columns(2)
+            with c1: comprador = st.text_input("Comprador (Quien regala)")
+            with c2: beneficiario = st.text_input("Beneficiaria (Quien la disfruta)")
+
+            c3, c4 = st.columns(2)
+            with c3: concepto_tr = st.text_input("Tratamiento / Concepto", value="Tratamiento Facial / Saldo Libre")
+            with c4: valor_tr = st.number_input("Importe (€)", value=50.0, step=5.0)
+
+            if st.form_submit_button("🎁 Generar Tarjeta Regalo"):
+                if comprador and beneficiario:
+                    conn = sqlite3.connect(DB_NAME)
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO tarjetas_regalo (codigo, comprador, beneficiario, concepto, saldo_inicial, saldo_actual, fecha_emision, estado) VALUES (?,?,?,?,?,?,?,'Activa')",
+                                   (cod_tr, comprador, beneficiario, concepto_tr, valor_tr, valor_tr, datetime.date.today().strftime("%Y-%m-%d")))
+                    conn.commit()
+                    conn.close()
+                    st.success(f"¡Tarjeta Regalo {cod_tr} emitida!")
+                    st.rerun()
+
+    conn = sqlite3.connect(DB_NAME)
+    df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', concepto as 'Concepto', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
+    conn.close()
+    st.dataframe(df_tr_list, use_container_width=True)
+
+# 7. CLIENTES
+with opcion[6]:
+    st.subheader("Fichero de Clientes")
+    conn = sqlite3.connect(DB_NAME)
+    df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email' FROM clientes ORDER BY id DESC", conn)
+    conn.close()
+    st.dataframe(df_cli, use_container_width=True)
+
+# 8. SERVICIOS
+with opcion[7]:
+    st.subheader("Catálogo de Tratamientos")
+    conn = sqlite3.connect(DB_NAME)
+    df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
+    conn.close()
+    st.dataframe(df_serv, use_container_width=True)
+    
