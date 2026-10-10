@@ -120,7 +120,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS CON MIGRACIÓN AUTOMÁTICA DE COLUMNAS ---
+# --- BASE DE DATOS CON MIGRACIÓN AUTOMÁTICA COMPLETA ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -163,7 +163,7 @@ def init_db():
                         FOREIGN KEY(cliente_id) REFERENCES clientes(id),
                         FOREIGN KEY(servicio_id) REFERENCES servicios(id))''')
 
-    # MIGRADOR AUTOMÁTICO: Garantiza que las columnas nuevas existan si la DB es antigua
+    # MIGRADOR AUTOMÁTICO TABLA CITAS
     cursor.execute("PRAGMA table_info(citas)")
     cols_citas = [c[1] for c in cursor.fetchall()]
     if "estado_cobro" not in cols_citas:
@@ -172,6 +172,26 @@ def init_db():
         cursor.execute("ALTER TABLE citas ADD COLUMN metodo_pago TEXT")
     if "monto_cobrado" not in cols_citas:
         cursor.execute("ALTER TABLE citas ADD COLUMN monto_cobrado REAL DEFAULT 0.0")
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS cajas (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        fecha TEXT UNIQUE NOT NULL,
+                        abonos_efectivo REAL DEFAULT 0.0,
+                        abonos_tarjeta REAL DEFAULT 0.0,
+                        abonos_bizum REAL DEFAULT 0.0,
+                        ingresos REAL DEFAULT 0.0,
+                        extracciones REAL DEFAULT 0.0,
+                        descuadre REAL DEFAULT 0.0,
+                        total_caja REAL DEFAULT 0.0,
+                        estado TEXT DEFAULT 'Cerrada')''')
+
+    # MIGRADOR AUTOMÁTICO TABLA CAJAS
+    cursor.execute("PRAGMA table_info(cajas)")
+    cols_cajas = [c[1] for c in cursor.fetchall()]
+    if "abonos_tarjeta" not in cols_cajas:
+        cursor.execute("ALTER TABLE cajas ADD COLUMN abonos_tarjeta REAL DEFAULT 0.0")
+    if "abonos_bizum" not in cols_cajas:
+        cursor.execute("ALTER TABLE cajas ADD COLUMN abonos_bizum REAL DEFAULT 0.0")
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS facturas (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -219,18 +239,6 @@ def init_db():
                         fecha_inicio TEXT NOT NULL,
                         fecha_fin TEXT NOT NULL,
                         motivo TEXT)''')
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS cajas (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        fecha TEXT UNIQUE NOT NULL,
-                        abonos_efectivo REAL DEFAULT 0.0,
-                        abonos_tarjeta REAL DEFAULT 0.0,
-                        abonos_bizum REAL DEFAULT 0.0,
-                        ingresos REAL DEFAULT 0.0,
-                        extracciones REAL DEFAULT 0.0,
-                        descuadre REAL DEFAULT 0.0,
-                        total_caja REAL DEFAULT 0.0,
-                        estado TEXT DEFAULT 'Cerrada')''')
 
     cursor.execute("SELECT COUNT(*) FROM servicios")
     if cursor.fetchone()[0] == 0:
@@ -334,7 +342,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-        # 1. AGENDA
+# 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
