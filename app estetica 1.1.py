@@ -42,10 +42,10 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# CSS Optimizado para Móvil
+# CSS Limpio para Móvil (Elimina negritas y suaviza la interfaz)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Quicksand:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600&family=Quicksand:wght@300;400;500&display=swap');
 
     section[data-testid="stSidebar"] { display: none !important; }
     header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
@@ -54,7 +54,7 @@ st.markdown("""
         background-color: #0f0e13 !important;
         color: #f3effa !important;
         font-family: 'Quicksand', sans-serif !important;
-        font-weight: 400 !important;
+        font-weight: 300 !important;
     }
 
     .block-container {
@@ -69,6 +69,7 @@ st.markdown("""
         font-family: 'Comfortaa', cursive !important;
         color: #e6c566 !important;
         letter-spacing: 0.3px !important;
+        font-weight: 600 !important;
     }
 
     .brand-subtext {
@@ -78,7 +79,7 @@ st.markdown("""
         letter-spacing: 2px;
         margin-top: -2px;
         text-transform: uppercase;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .card-metric {
@@ -102,29 +103,27 @@ st.markdown("""
         border: none !important;
     }
 
-    /* AJUSTES RESPONSIVE DE FULLCALENDAR */
+    /* CALENDARIO: FUENTE LIGERA SIN NEGRITAS EMPASTADAS */
     .fc {
         font-size: 11px !important;
         font-family: 'Quicksand', sans-serif !important;
         font-weight: 400 !important;
     }
-    .fc-event-title, .fc-event-time {
-        font-weight: 500 !important;
-    }
-    .fc-toolbar {
-        flex-wrap: wrap !important;
-        gap: 5px !important;
-        justify-content: center !important;
+    .fc-event, .fc-event-title, .fc-event-time, .fc-col-header-cell-cushion {
+        font-weight: 400 !important;
+        text-decoration: none !important;
     }
     .fc-toolbar-title {
         font-size: 14px !important;
         font-family: 'Comfortaa', cursive !important;
         color: #e6c566 !important;
+        font-weight: 600 !important;
     }
     .fc-button {
         padding: 4px 8px !important;
         font-size: 11px !important;
         border-radius: 8px !important;
+        font-weight: 400 !important;
     }
     .fc-timegrid-slot {
         height: 24px !important;
@@ -137,6 +136,7 @@ st.markdown("""
         color: #bfa8db !important;
         font-family: 'Comfortaa', cursive !important;
         font-size: 11px !important;
+        font-weight: 400 !important;
     }
     .stTabs [aria-selected="true"] {
         background-color: #241f33 !important;
@@ -146,7 +146,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS E INICIALIZACIÓN ---
+# --- BASE DE DATOS COMPLETA ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -283,7 +283,7 @@ with col_h1:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 10px;">
             <div>
-                <div class="brand-title" style="font-size: 22px; font-weight:700; line-height:1.1;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 22px; font-weight:600; line-height:1.1;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
@@ -293,35 +293,28 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# --- MENÚ SUPERIOR REORGANIZADO POR IMPORTANCIA ---
+# --- MENÚ DE NAVEGACIÓN PRINCIPAL ---
 opcion = st.tabs([
     "📅 Agenda", 
     "💳 Caja & Cobros", 
     "📈 Estadísticas Top",
+    "📣 Marketing & Promo", 
     "👤 Clientes", 
     "💆‍♀️ Servicios",
     "📦 Stock", 
     "🏛️ Fiscal", 
     "📉 Gastos", 
-    "📣 Marketing", 
     "⏳ Lista Espera",
     "✍️ Firma & RGPD"
 ])
 
-def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servicio_nombre):
+def generar_link_whatsapp(telefono, texto_mensaje):
     tel_clean = "".join(filter(str.isdigit, str(telefono or "")))
     if tel_clean and len(tel_clean) == 9 and not tel_clean.startswith("34"):
         tel_clean = f"34{tel_clean}"
-        
-    texto_raw = (
-        f"Hola {nombre_cliente}! ✨\n\n"
-        f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
-        f"para el servicio de *{servicio_nombre}* el día *{fecha_str}* a las *{hora_str}h*.\n\n"
-        f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
-    )
-    return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_raw, encoding='utf-8')}"
+    return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# MODAL CREAR CITA (CLIENTA VACÍA POR DEFECTO Y SIN ETIQUETA)
+# MODAL PARA NUEVA CITA
 @st.dialog("➕ Agendar Nueva Cita")
 def modal_crear_cita(fecha_hora_inicio):
     conn = sqlite3.connect(DB_NAME)
@@ -335,7 +328,6 @@ def modal_crear_cita(fecha_hora_inicio):
 
     st.markdown(f"📅 **Hora Seleccionada:** `{fecha_hora_inicio.replace('T', ' ')[:16]}`")
 
-    # Opción vacía por defecto
     opciones_cli = [0] + list(df_c["id"])
     dict_cli = {0: "--- Selecciona una clienta ---"}
     for _, r in df_c.iterrows(): dict_cli[r["id"]] = r["nom"]
@@ -364,7 +356,7 @@ def modal_crear_cita(fecha_hora_inicio):
         st.success("¡Cita agendada correctamente!")
         st.rerun()
 
-# MODAL DETALLE CITA CON BOTÓN WHATSAPP
+# MODAL DETALLE CITA CON BOTÓN WHATSAPP GARANTIZADO
 @st.dialog("⚙️ Detalle de Cita")
 def modal_editar_cita(cita_id):
     conn = sqlite3.connect(DB_NAME)
@@ -388,6 +380,7 @@ def modal_editar_cita(cita_id):
     st.markdown(f"### 💆‍♀️ {s_n}")
     st.markdown(f"👤 **Cliente:** {nom_cli}")
     st.markdown(f"📅 **Fecha:** {dt_i.strftime('%d/%m/%Y')} a las {dt_i.strftime('%H:%M')}h")
+    if cl_tel: st.markdown(f"📱 **Teléfono:** {cl_tel}")
     if obs: st.info(f"📝 **Notas:** {obs}")
 
     st.markdown("---")
@@ -398,8 +391,15 @@ def modal_editar_cita(cita_id):
         if st.button("💶 Cobrar Servicio Ahora", use_container_width=True):
             modal_cobrar_cita(cita_id, nom_cli, s_n, s_pre)
 
-    if cl_tel:
-        url_wa = generar_link_whatsapp(cl_tel, nom_cli, dt_i.strftime("%d/%m/%Y"), dt_i.strftime("%H:%M"), s_n)
+    # BOTÓN WHATSAPP SIEMPRE VISIBLE SI HAY TELÉFONO
+    if cl_tel and str(cl_tel).strip() != "":
+        txt_wa = (
+            f"Hola {nom_cli}! ✨\n\n"
+            f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
+            f"para el servicio de *{s_n}* el día *{dt_i.strftime('%d/%m/%Y')}* a las *{dt_i.strftime('%H:%M')}h*.\n\n"
+            f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
+        )
+        url_wa = generar_link_whatsapp(cl_tel, txt_wa)
         st.link_button("📲 Enviar Recordatorio por WhatsApp", url_wa, use_container_width=True)
 
     if st.button("🗑️ Eliminar Cita", use_container_width=True):
@@ -457,7 +457,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-        # 1. AGENDA EN CASTELLANO Y FUNCIONAL
+        # 1. AGENDA EN ESPAÑOL
 with opcion[0]:
     st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -502,7 +502,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v4")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v5")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -554,12 +554,11 @@ with opcion[1]:
                 if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
                     modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
 
-# 3. ESTADÍSTICAS TOP Y ANALÍTICA DE NEGOCIO
+# 3. ESTADÍSTICAS & ANALÍTICA
 with opcion[2]:
-    st.subheader("📈 Estadísticas & Métricas del Centro")
-    
+    st.subheader("📈 Analítica Completa del Centro")
     conn = sqlite3.connect(DB_NAME)
-    df_citas_cob = pd.read_sql_query("""SELECT c.monto_cobrado, c.metodo_pago, s.nombre as servicio, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as cliente
+    df_citas_cob = pd.read_sql_query("""SELECT c.fecha_inicio, c.monto_cobrado, c.metodo_pago, s.nombre as servicio, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as cliente
                                         FROM citas c 
                                         JOIN servicios s ON c.servicio_id = s.id
                                         JOIN clientes cl ON c.cliente_id = cl.id
@@ -569,109 +568,148 @@ with opcion[2]:
     if df_citas_cob.empty:
         st.info("Aún no hay cobros registrados para generar analíticas.")
     else:
-        tot_facturado = df_citas_cob["monto_cobrado"].sum()
-        num_servicios = len(df_citas_cob)
-        num_clientes_unicos = df_citas_cob["cliente"].nunique()
-        ticket_medio = tot_facturado / num_servicios if num_servicios > 0 else 0.0
-        gasto_medio_clienta = tot_facturado / num_clientes_unicos if num_clientes_unicos > 0 else 0.0
+        tot_fact = df_citas_cob["monto_cobrado"].sum()
+        num_serv = len(df_citas_cob)
+        num_cli_unicos = df_citas_cob["cliente"].nunique()
+        ticket_med = tot_fact / num_serv if num_serv > 0 else 0.0
+        gasto_med_cli = tot_fact / num_cli_unicos if num_cli_unicos > 0 else 0.0
 
-        st.markdown("### 🏆 Indicadores Clave")
+        st.markdown("### 🏆 KPIs de Negocio")
         c_m1, c_m2, c_m3 = st.columns(3)
-        with c_m1: st.metric("💶 Total Facturado", f"{tot_facturado:.2f} €")
-        with c_m2: st.metric("🎟️ Ticket Medio / Cita", f"{ticket_medio:.2f} €")
-        with c_m3: st.metric("👤 Gasto Medio / Clienta", f"{gasto_medio_clienta:.2f} €")
+        with c_m1: st.metric("💶 Total Facturado", f"{tot_fact:.2f} €")
+        with c_m2: st.metric("🎟️ Ticket Medio / Servicio", f"{ticket_med:.2f} €")
+        with c_m3: st.metric("👤 Gasto Medio / Clienta", f"{gasto_med_cli:.2f} €")
 
         st.markdown("---")
         col_g1, col_g2 = st.columns(2)
         with col_g1:
-            st.markdown("#### 💆‍♀️ Tratamientos Más Demandados")
-            top_serv = df_citas_cob["servicio"].value_counts()
-            st.bar_chart(top_serv)
+            st.markdown("#### 💆‍♀️ Top Tratamientos Más Vendidos")
+            st.bar_chart(df_citas_cob["servicio"].value_counts())
 
         with col_g2:
-            st.markdown("#### 💳 Reparto por Método de Pago")
-            top_pago = df_citas_cob["metodo_pago"].value_counts()
-            st.bar_chart(top_pago)
+            st.markdown("#### ⏰ Franjas Horarias con Más Demanda")
+            df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
+            st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
 
-# 4. CLIENTES Y MONEDERO
+        st.markdown("---")
+        st.markdown("#### 👑 Top Clientas por Facturación")
+        df_top_cli = df_citas_cob.groupby("cliente")["monto_cobrado"].sum().reset_index().sort_values(by="monto_cobrado", ascending=False).head(5)
+        df_top_cli.columns = ["Clienta", "Total Gastado (€)"]
+        st.dataframe(df_top_cli, use_container_width=True)
+
+# 4. MARKETING & FIDELIZACIÓN COMPLETO
 with opcion[3]:
-    st.subheader("👤 Fichero de Clientes y Monedero Saldo")
+    st.subheader("📣 Módulo de Marketing y Fidelización")
+
+    tab_m1, tab_m2, tab_m3 = st.tabs(["🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp", "🎁 Tarjetas Regalo"])
+
+    with tab_m1:
+        st.markdown("### 🎂 Próximos Cumpleaños")
+        mes_actual = datetime.date.today().strftime("%m")
+        conn = sqlite3.connect(DB_NAME)
+        df_cump = pd.read_sql_query("SELECT nombre || ' ' || COALESCE(primer_apellido,'') as nom, telefono, fecha_nacimiento FROM clientes WHERE fecha_nacimiento LIKE ?", (f"%-{mes_actual}-%",), conn)
+        conn.close()
+
+        if df_cump.empty:
+            st.info("No hay cumpleaños registrados para este mes.")
+        else:
+            for _, r in df_cump.iterrows():
+                col1, col2 = st.columns([3, 1])
+                with col1: st.markdown(f"🎉 **{r['nom']}** ({r['fecha_nacimiento']})")
+                with col2:
+                    if r['telefono']:
+                        msg_cump = f"¡Feliz Cumpleaños {r['nom']}! 🥳✨ Desde Judit Domingo Centre d'Estètica te deseamos un gran día. ¡Tienes un 10% de descuento en tu próximo tratamiento como regalo!"
+                        url_cump = generar_link_whatsapp(r['telefono'], msg_cump)
+                        st.link_button("📲 Felicitar", url_cump, use_container_width=True)
+
+    with tab_m2:
+        st.markdown("### 💬 Difusión y Promociones")
+        plantilla = st.selectbox("Selecciona Tipo de Campaña", [
+            "Lanzamiento de Tratamiento (Maderoterapia/Facial)",
+            "Promoción Especial de Temporada",
+            "Solicitud de Reseña en Google (5 Estrellas)"
+        ])
+
+        if plantilla == "Lanzamiento de Tratamiento (Maderoterapia/Facial)":
+            txt_promo = "Hola! ✨ Novedad en Judit Domingo Centre d'Estètica. Hemos abierto agenda para el nuevo tratamiento facial/corporal. ¡Reserva tu plaza esta semana y llévate un diagnóstico gratuito! 💆‍♀️"
+        elif plantilla == "Promoción Especial de Temporada":
+            txt_promo = "Hola! 🌸 Prepara tu piel esta temporada. Disfruta de un pack especial este mes. ¡Plazas limitadas! Mándanos un mensaje para agendar tu cita."
+        else:
+            txt_promo = "Hola! ✨ Muchas gracias por confiar en Judit Domingo Centre d'Estètica. Nos encantaría saber tu opinión: ¿nos dejas 5 estrellas en Google? Nos ayuda muchísimo: https://g.page/r/juditestetica"
+
+        st.text_area("Texto de la Promoción (Copia y envía por WhatsApp)", value=txt_promo, height=100)
+
+    with tab_m3:
+        st.markdown("### 🎁 Tarjetas Regalo Emitidas")
+        conn = sqlite3.connect(DB_NAME)
+        df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
+        conn.close()
+        st.dataframe(df_tr_list, use_container_width=True)
+
+# 5. CLIENTES
+with opcion[4]:
+    st.subheader("👤 Fichero de Clientes")
     conn = sqlite3.connect(DB_NAME)
     df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', PRINTF('%.2f €', monedero) as 'Saldo Monedero' FROM clientes ORDER BY id DESC", conn)
     conn.close()
     st.dataframe(df_cli, use_container_width=True)
 
-# 5. SERVICIOS
-with opcion[4]:
+# 6. SERVICIOS
+with opcion[5]:
     st.subheader("💆‍♀️ Catálogo de Tratamientos")
     conn = sqlite3.connect(DB_NAME)
     df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
     conn.close()
     st.dataframe(df_serv, use_container_width=True)
 
-# 6. STOCK
-with opcion[5]:
-    st.subheader("📦 Control de Stock Seleccionado")
+# 7. STOCK
+with opcion[6]:
+    st.subheader("📦 Control de Stock")
     conn = sqlite3.connect(DB_NAME)
     df_st = pd.read_sql_query("SELECT nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
     conn.close()
     st.dataframe(df_st, use_container_width=True)
 
-# 7. FISCAL
-with opcion[6]:
-    st.subheader("🏛️ Panel Fiscal y Estimación de Trimestres")
-    col_f1, col_f2 = st.columns(2)
-    with col_f1: anio_f = st.selectbox("Año Fiscal", [2026, 2025])
-    with col_f2: trim_f = st.selectbox("Trimestre", ["1T (Ene - Mar)", "2T (Abr - Jun)", "3T (Jul - Sep)", "4T (Oct - Dic)"])
-
+# 8. FISCAL
+with opcion[7]:
+    st.subheader("🏛️ Panel Fiscal")
     conn = sqlite3.connect(DB_NAME)
     df_f_ing = pd.read_sql_query("SELECT total, metodo_pago FROM facturas", conn)
     df_f_gas = pd.read_sql_query("SELECT base_imponible, iva_porcentaje, total FROM gastos", conn)
     conn.close()
 
     tot_v = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
-    iva_rep = tot_v * 0.21
     tot_gb = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
     tot_gi = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
 
-    iva_pag = iva_rep - tot_gi
+    iva_pag = (tot_v * 0.21) - tot_gi
     rend_net = tot_v - (tot_gb + tot_gi)
-    irpf_est = max(0.0, rend_net * 0.20)
 
     st.markdown("---")
-    c1, c2, c3 = st.columns(3)
-    with c1: st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{iva_pag:.2f} €</h2></div>", unsafe_allow_html=True)
-    with c2: st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_est:.2f} €</h2></div>", unsafe_allow_html=True)
-    with c3: st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rend_net:.2f} €</h2></div>", unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1: st.metric("📊 IVA a Liquidar (Mod. 303)", f"{iva_pag:.2f} €")
+    with c2: st.metric("💵 Rendimiento Neto Real", f"{rend_net:.2f} €")
 
-# 8. GASTOS
-with opcion[7]:
-    st.subheader("📉 Gastos del Local y Compras")
+# 9. GASTOS
+with opcion[8]:
+    st.subheader("📉 Gastos del Local")
     conn = sqlite3.connect(DB_NAME)
     df_g = pd.read_sql_query("SELECT fecha as 'Fecha', proveedor as 'Proveedor', concepto as 'Concepto', total as 'Total (€)' FROM gastos ORDER BY fecha DESC", conn)
     conn.close()
     st.dataframe(df_g, use_container_width=True)
 
-# 9. MARKETING
-with opcion[8]:
-    st.subheader("📣 Tarjetas Regalo y Fidelización")
-    conn = sqlite3.connect(DB_NAME)
-    df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
-    conn.close()
-    st.dataframe(df_tr_list, use_container_width=True)
-
 # 10. LISTA DE ESPERA
 with opcion[9]:
-    st.subheader("⏳ Lista de Espera de Citas")
+    st.subheader("⏳ Lista de Espera")
     conn = sqlite3.connect(DB_NAME)
-    df_le_view = pd.read_sql_query("""SELECT le.id, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as 'Clienta', cl.telefono as 'Móvil', s.nombre as 'Tratamiento', le.preferencia_horario as 'Preferencia', le.fecha_registro as 'Anotada el'
+    df_le_view = pd.read_sql_query("""SELECT le.id, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as 'Clienta', cl.telefono as 'Móvil', s.nombre as 'Tratamiento', le.preferencia_horario as 'Preferencia'
                                       FROM lista_espera le JOIN clientes cl ON le.cliente_id = cl.id JOIN servicios s ON le.servicio_id = s.id WHERE le.estado='Pendiente'""", conn)
     conn.close()
     st.dataframe(df_le_view, use_container_width=True)
 
 # 11. FIRMA & RGPD
 with opcion[10]:
-    st.subheader("✍️ Firma Digital de Consentimiento Informado & RGPD")
+    st.subheader("✍️ Firma Digital de Consentimientos & RGPD")
     conn = sqlite3.connect(DB_NAME)
     df_cli_select = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
     conn.close()
@@ -680,11 +718,6 @@ with opcion[10]:
         c_sel = st.selectbox("Seleccionar Clienta *", options=df_cli_select["id"], format_func=lambda x: df_cli_select[df_cli_select["id"]==x]["nom"].values[0])
         tipo_trat = st.selectbox("Tratamiento a Realizar", ["Maderoterapia Corporal", "Higiene Facial Profunda / Peeling", "Lifting / Extensión de Pestañas", "Microblading / Micropigmentación", "Tratamiento General Estética"])
         
-        st.markdown("""
-            **Cláusula de Consentimiento:**
-            Declaro haber sido informada de las características del tratamiento, cuidados posteriores y no presentar contraindicaciones médicas conocidas. Autorizo el tratamiento en *Judit Domingo Centre d'Estètica*.
-        """)
-
         nombre_firma = st.text_input("Escribe tu Nombre Completo como Firma Digital *")
         chk_rgpd = st.checkbox("Acepto la Política de Protección de Datos (RGPD).", value=True)
 
@@ -698,4 +731,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-                
+        
