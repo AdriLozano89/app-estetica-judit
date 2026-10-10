@@ -42,124 +42,124 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# ESTILOS CSS CON TIPOGRAFÍA REDONDEADA Y ELEGANTE EN TODO EL CUERPO (Montserrat + Nunito)
+# ESTILOS CSS LIMPIOS Y ESPACIOSOS (Outfit + Plus Jakarta Sans)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Nunito:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
     section[data-testid="stSidebar"] { display: none !important; }
     header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
 
-    /* APLICAR NUNITO A TODO EL CUERPO, TABLAS, TEXTOS Y NÚMEROS */
-    html, body, [class*="css"], .stApp, p, span, label, div {
-        background-color: #0f0e13 !important;
-        color: #f5f0fb !important;
-        font-family: 'Nunito', sans-serif !important;
-        font-weight: 400 !important;
-        letter-spacing: 0.2px !important;
+    /* ESTILO GENERAL DE LA APP */
+    .stApp {
+        background-color: #0d0c12 !important;
+        color: #f7f5fd !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
     .block-container {
-        padding-top: 0.8rem !important;
-        padding-bottom: 1.5rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
         max-width: 100% !important;
     }
 
-    /* TÍTULOS Y CABECERAS REDONDEADAS DULCES */
+    /* TÍTULOS ELEGANTES */
     h1, h2, h3, .brand-title {
-        font-family: 'Montserrat', sans-serif !important;
+        font-family: 'Outfit', sans-serif !important;
         color: #e6c566 !important;
-        letter-spacing: 0.5px !important;
-        font-weight: 700 !important;
+        letter-spacing: 0.4px !important;
+        font-weight: 600 !important;
     }
 
     .brand-subtext {
-        font-family: 'Nunito', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 11px;
         color: #d4af37;
-        letter-spacing: 2px;
+        letter-spacing: 2.5px;
         margin-top: -2px;
         text-transform: uppercase;
         font-weight: 600;
     }
 
+    /* TARJETAS Y MÉTRICAS */
     .card-metric {
-        background: linear-gradient(145deg, #1b1828 0%, #13111e 100%);
-        border: 1px solid #3c334d;
-        border-left: 5px solid #e6c566;
-        border-radius: 16px;
-        padding: 14px 18px;
+        background: linear-gradient(145deg, #181624 0%, #110f1a 100%);
+        border: 1px solid #332d43;
+        border-left: 4px solid #e6c566;
+        border-radius: 14px;
+        padding: 16px;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.35);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        margin-bottom: 10px;
     }
 
+    /* BOTONES BONITOS Y ESPACIOSOS */
     .stButton>button {
         background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%) !important;
         color: #1a1600 !important;
-        font-family: 'Nunito', sans-serif !important;
-        font-weight: 700 !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 600 !important;
         font-size: 13px !important;
-        padding: 8px 18px !important;
-        border-radius: 20px !important;
+        padding: 10px 20px !important;
+        border-radius: 14px !important;
         border: none !important;
         box-shadow: 0 3px 10px rgba(230, 197, 102, 0.2) !important;
+        width: 100% !important;
     }
 
     .stLinkButton>a {
         background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
         color: #ffffff !important;
-        font-family: 'Nunito', sans-serif !important;
-        font-weight: 700 !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 600 !important;
         font-size: 13px !important;
-        padding: 8px 18px !important;
-        border-radius: 20px !important;
+        padding: 10px 20px !important;
+        border-radius: 14px !important;
         border: none !important;
         text-decoration: none !important;
         display: block !important;
         text-align: center !important;
+        width: 100% !important;
     }
 
-    /* FULLCALENDAR ADAPTADO A LA TIPOGRAFÍA REDONDA */
-    .fc {
-        font-size: 12px !important;
-        font-family: 'Nunito', sans-serif !important;
+    /* PESTAÑAS SUPERIORES */
+    .stTabs [data-baseweb="tab-list"] { 
+        gap: 6px; 
+        overflow-x: auto;
     }
-    .fc-event-title, .fc-event-time {
-        font-family: 'Nunito', sans-serif !important;
-        font-weight: 600 !important;
-    }
-    .fc-toolbar-title {
-        font-size: 15px !important;
-        font-family: 'Montserrat', sans-serif !important;
-        color: #e6c566 !important;
-        font-weight: 700 !important;
-    }
-    .fc-button {
-        padding: 5px 10px !important;
-        font-size: 12px !important;
-        border-radius: 12px !important;
-        font-family: 'Nunito', sans-serif !important;
-        font-weight: 600 !important;
-    }
-    .fc-timegrid-slot {
-        height: 26px !important;
-    }
-    .stTabs [data-baseweb="tab-list"] { gap: 4px; }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 12px 12px 0px 0px !important;
-        padding: 8px 12px !important;
-        background-color: #161420 !important;
+        border-radius: 10px 10px 0px 0px !important;
+        padding: 10px 14px !important;
+        background-color: #151321 !important;
         color: #bfa8db !important;
-        font-family: 'Nunito', sans-serif !important;
+        font-family: 'Outfit', sans-serif !important;
         font-size: 12px !important;
-        font-weight: 600 !important;
+        font-weight: 500 !important;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #262036 !important;
+        background-color: #252035 !important;
         color: #e6c566 !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
+    }
+
+    /* CALENDARIO FULLCALENDAR */
+    .fc {
+        font-size: 12px !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+    .fc-toolbar-title {
+        font-size: 16px !important;
+        font-family: 'Outfit', sans-serif !important;
+        color: #e6c566 !important;
+        font-weight: 600 !important;
+    }
+    .fc-button {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        border-radius: 10px !important;
+        font-family: 'Outfit', sans-serif !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -301,7 +301,7 @@ with col_h1:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 10px;">
             <div>
-                <div class="brand-title" style="font-size: 22px; font-weight:600; line-height:1.1;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 24px; font-weight:600; line-height:1.1;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
@@ -522,7 +522,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v9")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v10")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -574,7 +574,7 @@ with opcion[1]:
                 if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
                     modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
 
-# 3. ESTADÍSTICAS ORGANIZADAS EN SUBGRUPOS
+# 3. ESTADÍSTICAS ORGANIZADAS
 with opcion[2]:
     st.subheader("📈 Centro de Analítica & Estadísticas")
     
@@ -774,4 +774,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-                
+        
