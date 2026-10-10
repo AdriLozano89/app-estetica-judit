@@ -7,7 +7,7 @@ import hashlib
 import os
 import base64
 import urllib.parse
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import io
 
 # Configuración inicial
@@ -24,7 +24,7 @@ GASTOS_DIR = "facturas_gastos"
 if not os.path.exists(GASTOS_DIR):
     os.makedirs(GASTOS_DIR)
 
-# Cargar el logo local en Base64
+# Cargar logo Base64
 def cargar_logo_base64():
     directorio = os.path.dirname(os.path.abspath(__file__))
     nombres_posibles = ["imagen_2026-10-08_205258476.jpg", "images.jpg", "logo.jpg", "logo.png", "images.png"]
@@ -43,11 +43,10 @@ def cargar_logo_base64():
 
 logo_data_uri, ruta_logo_file = cargar_logo_base64()
 
-# GESTIÓN DE SESIÓN
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = True
 
-# CSS CON LOGO DE FONDO COMPLETO
+# CSS CON ANIMACIÓN DE SALUDO PARA EL BOT Y LOGO DE FONDO
 css_logo_fondo = ""
 if logo_data_uri:
     css_logo_fondo = f"""
@@ -151,7 +150,26 @@ st.markdown(f"""
         width: 100% !important;
     }}
 
-    /* NAVEGACIÓN SUPERIOR POR BLOQUES LIMPIOS */
+    /* ANIMACIÓN SALUDO BOT ASISTENTE */
+    @keyframes botSaludo {{
+        0% {{ transform: rotate(0deg) scale(1); }}
+        15% {{ transform: rotate(12deg) scale(1.08); }}
+        30% {{ transform: rotate(-10deg) scale(1.08); }}
+        45% {{ transform: rotate(8deg) scale(1.05); }}
+        60% {{ transform: rotate(0deg) scale(1); }}
+        100% {{ transform: rotate(0deg) scale(1); }}
+    }}
+
+    div[data-testid="stPopover"] > button {{
+        animation: botSaludo 3.5s infinite ease-in-out !important;
+        background: linear-gradient(135deg, #ba9530 0%, #e6c566 100%) !important;
+        color: #0d0c12 !important;
+        font-weight: 700 !important;
+        border-radius: 30px !important;
+        box-shadow: 0 4px 15px rgba(230, 197, 102, 0.4) !important;
+        border: 2px solid #fff3c4 !important;
+    }}
+
     .stTabs [data-baseweb="tab-list"] {{ 
         gap: 6px; 
         overflow-x: auto;
@@ -178,29 +196,14 @@ st.markdown(f"""
         border-radius: 12px;
         padding: 6px;
     }}
-    .fc-timegrid-slot {{
-        height: 40px !important;
-    }}
-    .fc-timegrid-slot-label-frame {{
-        text-align: center !important;
-        font-size: 11px !important;
-        font-weight: 600 !important;
-        color: #d4af37 !important;
-    }}
-    .fc-toolbar-title {{
-        font-size: 18px !important;
-        font-family: 'Great Vibes', cursive !important;
-        color: #e6c566 !important;
-    }}
-    .fc-button {{
-        padding: 4px 10px !important;
-        font-size: 11px !important;
-        border-radius: 10px !important;
-    }}
+    .fc-timegrid-slot {{ height: 40px !important; }}
+    .fc-timegrid-slot-label-frame {{ text-align: center !important; font-size: 11px !important; font-weight: 600 !important; color: #d4af37 !important; }}
+    .fc-toolbar-title {{ font-size: 18px !important; font-family: 'Great Vibes', cursive !important; color: #e6c566 !important; }}
+    .fc-button {{ padding: 4px 10px !important; font-size: 11px !important; border-radius: 10px !important; }}
     </style>
 """, unsafe_allow_html=True)
 
-# CONTROL LOGIN
+# LOGIN
 if not st.session_state["authenticated"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
@@ -354,7 +357,7 @@ def init_db():
 
 init_db()
 
-# HEADER Y BOTÓN FLOTANTE
+# HEADER
 col_h1, col_h2 = st.columns([7, 3])
 with col_h1:
     st.markdown("""
@@ -370,7 +373,7 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# NAVEGACIÓN PRINCIPAL REDISEÑADA EN 5 GRANDES BLOQUES
+# BLOQUES NAVEGACIÓN
 opcion_bloque = st.tabs([
     "📅 Agenda & Citas", 
     "💶 Caja & Finanzas", 
@@ -385,57 +388,48 @@ def generar_link_whatsapp(telefono, texto_mensaje):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# GENERADOR DE TARJETA REGALO CON PROPORCIÓN DE LOGO PERFECTA Y TIPOGRAFÍA CLARA
-def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, importe):
-    ancho, alto = 1200, 680
-    base_img = Image.new("RGBA", (ancho, alto), (14, 12, 18, 255))
-
-    # Cargar logo manteniendo su proporción original en el fondo del recuadro
-    if ruta_logo_file and os.path.exists(ruta_logo_file):
-        try:
-            logo_img = Image.open(ruta_logo_file).convert("RGBA")
-            logo_img.thumbnail((ancho - 160, alto - 160), Image.Resampling.LANCZOS)
-            pos_x = (ancho - logo_img.width) // 2
-            pos_y = (alto - logo_img.height) // 2
+# TARJETA REGALO HTML/CSS VECTORIAL
+def renderizar_tarjeta_regalo_html(codigo, comprador, beneficiario, concepto, importe):
+    logo_img_html = f'<img src="{logo_data_uri}" style="max-width:320px; max-height:220px; opacity:0.22; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1;">' if logo_data_uri else ''
+    
+    html_code = f"""
+    <div style="
+        position: relative;
+        width: 100%;
+        max-width: 650px;
+        margin: 0 auto;
+        background: #0f0e15;
+        border: 3px solid #e6c566;
+        border-radius: 18px;
+        padding: 30px 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        overflow: hidden;
+        color: #ffffff;
+        font-family: 'Quicksand', sans-serif;
+    ">
+        {logo_img_html}
+        <div style="position: relative; z-index: 2;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-family: 'Great Vibes', cursive; font-size: 48px; color: #e6c566; line-height: 1;">Judit Domingo</div>
+                <div style="font-size: 11px; color: #d4af37; letter-spacing: 3px; font-weight: 700; margin-top: 4px;">CENTRE D'ESTÈTICA — TARJETA REGALO</div>
+            </div>
             
-            # Opacidad del logo al 25% para no entorpecer la lectura
-            alpha = logo_img.split()[3]
-            alpha = alpha.point(lambda p: int(p * 0.25))
-            logo_img.putalpha(alpha)
-            base_img.paste(logo_img, (pos_x, pos_y), logo_img)
-        except Exception:
-            pass
+            <div style="background: rgba(22, 19, 32, 0.85); border: 1px solid #3d3550; border-radius: 14px; padding: 20px; margin-bottom: 15px;">
+                <div style="font-size: 18px; color: #ffffff; margin-bottom: 8px;"><b>Para:</b> {beneficiario}</div>
+                <div style="font-size: 16px; color: #dcd6f7; margin-bottom: 8px;"><b>De:</b> {comprador}</div>
+                <div style="font-size: 16px; color: #e6c566;"><b>Tratamiento:</b> {concepto}</div>
+            </div>
 
-    overlay = Image.new("RGBA", (ancho, alto), (0, 0, 0, 0))
-    draw_overlay = ImageDraw.Draw(overlay)
-
-    # Marco dorado elegante
-    draw_overlay.rectangle([25, 25, ancho-25, alto-25], outline="#e6c566", width=5)
-    draw_overlay.rectangle([35, 35, ancho-35, alto-35], outline="#ba9530", width=2)
-    draw_overlay.rectangle([65, 65, ancho-65, alto-65], fill=(14, 12, 20, 215), outline="#e6c566", width=2)
-
-    final_img = Image.alpha_composite(base_img, overlay)
-    draw = ImageDraw.Draw(final_img)
-
-    # Tipografía moderna de alta legibilidad
-    f_tit = ImageFont.load_default()
-    f_txt = ImageFont.load_default()
-
-    draw.text((ancho//2, 120), "Judit Domingo", fill="#e6c566", anchor="mm", font=f_tit)
-    draw.text((ancho//2, 180), "CENTRE D'ESTETICA - TARJETA REGALO", fill="#d4af37", anchor="mm", font=f_txt)
-
-    draw.text((110, 260), f"Para: {beneficiario}", fill="#ffffff", font=f_txt)
-    draw.text((110, 320), f"De: {comprador}", fill="#dcd6f7", font=f_txt)
-    draw.text((110, 380), f"Tratamiento: {concepto}", fill="#e6c566", font=f_txt)
-
-    draw.rectangle([ancho-380, alto-190, ancho-100, alto-90], fill=(28, 22, 40, 240), outline="#e6c566", width=3)
-    draw.text((ancho-240, alto-140), f"{importe:.2f} EUR", fill="#e6c566", anchor="mm", font=f_txt)
-
-    draw.text((110, alto-120), f"Codigo: {codigo}", fill="#a29bfe", font=f_txt)
-
-    buf = io.BytesIO()
-    final_img.convert("RGB").save(buf, format="PNG")
-    return buf.getvalue()
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 14px; color: #a29bfe; font-weight: 600;">Código: {codigo}</div>
+                <div style="background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%); color: #1a1600; font-weight: 800; font-size: 24px; padding: 10px 22px; border-radius: 12px;">
+                    {importe:.2f} €
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return html_code
 # MODALES CITA
 @st.dialog("➕ Agendar Nueva Cita")
 def modal_crear_cita(fecha_hora_inicio):
@@ -674,7 +668,7 @@ with opcion_bloque[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v20")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v21")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -685,7 +679,7 @@ with opcion_bloque[0]:
     if state.get("dateClick"):
         click_str = state["dateClick"]["date"]
         modal_crear_cita(click_str)
-        # 2. BLOQUE: CAJA & FINANZAS
+    # 2. BLOQUE: CAJA & FINANZAS
 with opcion_bloque[1]:
     tab_f1, tab_f2 = st.tabs(["💳 Caja del Día", "🏛️ Fiscal & Gastos"])
 
@@ -805,16 +799,13 @@ with opcion_bloque[3]:
                 conn.close()
                 st.success(f"¡Tarjeta Regalo {cod_tr} Emitida!")
 
-                img_bytes = generar_tarjeta_regalo_img(cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe)
-                st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Pro", use_container_width=True)
+                # Renderizado HTML/CSS de lujo
+                tarjeta_html = renderizar_tarjeta_regalo_html(cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe)
+                st.components.v1.html(tarjeta_html, height=360)
 
-                col_d1, col_d2 = st.columns(2)
-                with col_d1:
-                    st.download_button("📥 Descargar Tarjeta PNG", data=img_bytes, file_name=f"Tarjeta_{cod_tr}.png", mime="image/png", use_container_width=True)
-                with col_d2:
-                    if tr_tel_envio:
-                        msg_tr = f"¡Hola {tr_beneficiario}! 🎁 Te han regalado una Tarjeta Regalo en *Judit Domingo Centre d'Estètica* por valor de *{tr_importe:.2f}€* (*{tr_concepto}*). ¡Llámanos para agendar tu cita!"
-                        st.link_button("📲 Notificar por WhatsApp", generar_link_whatsapp(tr_tel_envio, msg_tr), use_container_width=True)
+                if tr_tel_envio:
+                    msg_tr = f"¡Hola {tr_beneficiario}! 🎁 Te han regalado una Tarjeta Regalo en *Judit Domingo Centre d'Estètica* por valor de *{tr_importe:.2f}€* (*{tr_concepto}*). ¡Llámanos para agendar tu cita!"
+                    st.link_button("📲 Notificar por WhatsApp", generar_link_whatsapp(tr_tel_envio, msg_tr), use_container_width=True)
 
         st.markdown("---")
         st.markdown("### 📋 Tarjetas Regalo Emitidas")
@@ -902,32 +893,41 @@ with opcion_bloque[4]:
         conn.close()
         st.dataframe(df_le, use_container_width=True)
 
-# BOT FLOTANTE IA EN LA ESQUINA INFERIOR DERECHA
-with st.popover("🤖 Bot Asistente", help="Consulta dudas sobre tratamientos o la app"):
+# BOT FLOTANTE CON RESPUESTAS INTELIGENTES COMPLETAS
+with st.popover("🤖 Bot Asistente (👋)", help="Haz clic para chatear con el asistente de la app"):
     st.markdown("### 🤖 Asistente del Centro")
-    st.caption("Pregunta lo que necesites sobre citas, caja o información de tratamientos.")
+    st.caption("Pregúntame sobre la gestión de la agenda, tratamientos de estética, cobros o cualquier función.")
 
     if "bot_chat" not in st.session_state:
         st.session_state["bot_chat"] = [
-            {"role": "assistant", "content": "¡Hola Judit y Adri! 💆‍♀️ ¿En qué puedo ayudaros hoy?"}
+            {"role": "assistant", "content": "¡Hola Judit y Adri! 💆‍♀️ Soy el asistente virtual. Os reconozco porque esta sesión es del centro Judit Domingo. ¿En qué os ayudo hoy?"}
         ]
 
     for msg in st.session_state["bot_chat"]:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    if user_prompt := st.chat_input("Escribe tu duda aquí..."):
+    if user_prompt := st.chat_input("Escribe tu consulta aquí..."):
         st.session_state["bot_chat"].append({"role": "user", "content": user_prompt})
         st.chat_message("user").write(user_prompt)
 
-        p_low = user_prompt.lower()
-        if "maderoterapia" in p_low:
-            resp = "La Maderoterapia ayuda a drenar líquidos y reafirmar. Se recomiendan sesiones de 45-60 min."
-        elif "caja" in p_low or "cobrar" in p_low:
-            resp = "Para cobrar, ve a '💶 Caja & Finanzas' o pulsa en la cita del calendario y selecciona 'Cobrar'."
-        elif "tarjeta" in p_low:
-            resp = "Puedes emitir o editar tarjetas regalo en '📣 Marketing & Regalos' > '🎁 Tarjetas Regalo'."
+        p = user_prompt.lower().strip()
+        
+        if "llamo" in p or "nombre" in p or "quien soy" in p:
+            resp = "¡Sois Judit y Adri! Esta aplicación es vuestro sistema de gestión personalizado para Judit Domingo - Centre d'Estètica."
+        elif "ayudar" in p or "hacer" in p or "funciones" in p:
+            resp = "Puedo ayudarte en:\n\n1. **Gestión de Agenda:** Cómo crear o cobrar citas.\n2. **Tratamientos:** Info sobre Maderoterapia, Limpiezas Faciales o Acrylgel.\n3. **Tarjetas Regalo y Promos:** Guía para emitirlas e imprimirlas.\n4. **Caja y Fiscalidad:** Dónde ver el IVA, gastos e ingresos diarios."
+        elif "maderoterapia" in p:
+            resp = "La **Maderoterapia Corporal** remodela la figura, drena la retención de líquidos y tonifica la piel mediante utensilios de madera de pino. Ideal en bonos de 5 a 10 sesiones."
+        elif "facial" in p or "higiene" in p:
+            resp = "La **Higiene Facial Profunda** limpia los poros, elimina impurezas e hidrata en profundidad. Duración aproximada: 60 min."
+        elif "caja" in p or "cobrar" in p or "pagar" in p:
+            resp = "Para cobrar una cita, ve al bloque **'💶 Caja & Finanzas'** o haz clic directamente sobre la cita en la agenda y pulsa en **'💶 Cobrar Servicio'**."
+        elif "tarjeta" in p or "regalo" in p:
+            resp = "Puedes emitir y modificar tarjetas regalo en el bloque **'📣 Marketing & Regalos' > '🎁 Tarjetas Regalo'**. La tarjeta se genera con vuestro logo y colores corporativos."
+        elif "iva" in p or "impuesto" in p or "trimestre" in p:
+            resp = "Los cálculos del IVA (Modelo 303) e IRPF (Modelo 130) los tienes disponibles en **'💶 Caja & Finanzas' > '🏛️ Fiscal & Gastos'**."
         else:
-            resp = "¡Entendido! Consulta registrada. ¿Necesitas ayuda con algo más?"
+            resp = f"Entendido, he analizado tu consulta sobre '{user_prompt}'. Si necesitas ayuda para realizar alguna acción concreta en la agenda o contabilidad, ¡dímelo!"
 
         st.session_state["bot_chat"].append({"role": "assistant", "content": resp})
         st.chat_message("assistant").write(resp)
