@@ -42,7 +42,7 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# Estilos CSS Avanzados con Tipografía Comfortaa + Quicksand y Estética Dulce/Elegante
+# CSS Adaptado para Móvil (Oculta botones gigantes de FullCalendar y ajusta fuentes)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
@@ -57,22 +57,24 @@ st.markdown("""
     }
 
     .block-container {
-        padding-top: 1.2rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 95% !important;
+        padding-top: 0.8rem !important;
+        padding-bottom: 1.5rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        max-width: 100% !important;
     }
 
     h1, h2, h3, .brand-title {
         font-family: 'Comfortaa', cursive !important;
         color: #e6c566 !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 0.3px !important;
     }
 
     .brand-subtext {
         font-family: 'Quicksand', sans-serif;
-        font-size: 11px;
+        font-size: 10px;
         color: #d4af37;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
         margin-top: -2px;
         text-transform: uppercase;
         font-weight: 600;
@@ -81,11 +83,11 @@ st.markdown("""
     .card-metric {
         background: linear-gradient(145deg, #191724 0%, #12101a 100%);
         border: 1px solid #332d42;
-        border-left: 5px solid #e6c566;
-        border-radius: 16px;
-        padding: 18px 22px;
+        border-left: 4px solid #e6c566;
+        border-radius: 12px;
+        padding: 12px 15px;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .stButton>button {
@@ -93,42 +95,42 @@ st.markdown("""
         color: #1a1600 !important;
         font-family: 'Comfortaa', cursive !important;
         font-weight: 700 !important;
-        font-size: 13px !important;
-        padding: 8px 20px !important;
-        border-radius: 20px !important;
+        font-size: 12px !important;
+        padding: 6px 14px !important;
+        border-radius: 16px !important;
         border: none !important;
-        box-shadow: 0 4px 12px rgba(230, 197, 102, 0.25) !important;
     }
 
-    .stLinkButton>a {
-        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
-        color: #ffffff !important;
+    /* AJUSTES RESPONSIVE DE FULLCALENDAR PARA MÓVIL */
+    .fc {
+        font-size: 11px !important;
+    }
+    .fc-toolbar {
+        flex-wrap: wrap !important;
+        gap: 5px !important;
+        justify-content: center !important;
+    }
+    .fc-toolbar-title {
+        font-size: 14px !important;
         font-family: 'Comfortaa', cursive !important;
-        font-weight: 700 !important;
-        font-size: 13px !important;
-        padding: 8px 18px !important;
-        border-radius: 20px !important;
-        border: none !important;
-        text-decoration: none !important;
+        color: #e6c566 !important;
     }
-
-    .stTextInput>div>div>input, .stSelectbox>div>div, .stDateInput>div>div>input, .stTimeInput>div>div>input, .stTextArea>div>div>textarea {
-        background-color: #191724 !important;
-        color: #ffffff !important;
-        border: 1px solid #332d42 !important;
-        border-radius: 12px !important;
-        font-family: 'Quicksand', sans-serif !important;
-        font-weight: 500 !important;
+    .fc-button {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        border-radius: 8px !important;
     }
-
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
+    .fc-timegrid-slot {
+        height: 24px !important;
+    }
+    .stTabs [data-baseweb="tab-list"] { gap: 4px; }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 15px 15px 0px 0px !important;
-        padding: 10px 18px !important;
+        border-radius: 10px 10px 0px 0px !important;
+        padding: 6px 10px !important;
         background-color: #161420 !important;
         color: #bfa8db !important;
         font-family: 'Comfortaa', cursive !important;
-        font-size: 13px !important;
+        font-size: 11px !important;
     }
     .stTabs [aria-selected="true"] {
         background-color: #241f33 !important;
@@ -138,7 +140,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS COMPLETA PLATINUM CON MIGRADORES ---
+# --- BASE DE DATOS COMPLETA ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -299,18 +301,18 @@ def init_db():
 init_db()
 
 # --- HEADER SUPERIOR ---
-col_h1, col_h2 = st.columns([8, 2])
+col_h1, col_h2 = st.columns([7, 3])
 with col_h1:
     st.markdown("""
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
             <div>
-                <div class="brand-title" style="font-size: 28px; font-weight:700; line-height:1.1;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 22px; font-weight:700; line-height:1.1;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
 with col_h2:
-    if st.button("🔒 Cerrar Sesión", use_container_width=True):
+    if st.button("🔒 Salir", use_container_width=True):
         st.session_state["authenticated"] = False
         st.rerun()
 
@@ -320,10 +322,10 @@ opcion = st.tabs([
     "💳 Caja & Cobros", 
     "✍️ Firma & RGPD",
     "⏳ Lista Espera",
-    "🏛️ Fiscal & Trimestral", 
-    "📉 Gastos & Facturas", 
-    "📦 Stock Top", 
-    "📣 Marketing & Regalos", 
+    "🏛️ Fiscal", 
+    "📉 Gastos", 
+    "📦 Stock", 
+    "📣 Marketing", 
     "👤 Clientes", 
     "💆‍♀️ Servicios"
 ])
@@ -340,6 +342,42 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
         f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
     )
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_raw, encoding='utf-8')}"
+
+# MODAL PARA AÑADIR NUEVA CITA AL TOCAR LA HORA
+@st.dialog("➕ Agendar Nueva Cita")
+def modal_crear_cita(fecha_hora_inicio):
+    conn = sqlite3.connect(DB_NAME)
+    df_c = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
+    df_s = pd.read_sql_query("SELECT id, nombre, duracion_min, precio FROM servicios", conn)
+    conn.close()
+
+    if df_c.empty or df_s.empty:
+        st.warning("Debes dar de alta al menos a 1 cliente y 1 servicio primero.")
+        return
+
+    st.markdown(f"📅 **Hora Seleccionada:** `{fecha_hora_inicio.replace('T', ' ')}`")
+
+    c_sel = st.selectbox("Clienta *", options=df_c["id"], format_func=lambda x: df_c[df_c["id"]==x]["nom"].values[0])
+    s_sel = st.selectbox("Servicio / Tratamiento *", options=df_s["id"], format_func=lambda x: df_s[df_s["id"]==x]["nombre"].values[0])
+    etiq = st.selectbox("Etiqueta", ["General", "VIP", "Nueva Clienta", "Alergia/Sensible", "Prioritaria"])
+    obs = st.text_input("Observaciones / Notas")
+
+    if st.button("💾 Confirmar y Guardar Cita", use_container_width=True, type="primary"):
+        # Calcular fecha fin
+        serv_row = df_s[df_s["id"] == s_sel].iloc[0]
+        dur_min = int(serv_row["duracion_min"])
+        
+        dt_ini = datetime.datetime.fromisoformat(fecha_hora_inicio)
+        dt_fin = dt_ini + datetime.timedelta(minutes=dur_min)
+
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO citas (fecha_inicio, fecha_fin, cliente_id, servicio_id, etiqueta, notas) VALUES (?,?,?,?,?,?)",
+                       (dt_ini.isoformat(), dt_fin.isoformat(), c_sel, s_sel, etiq, obs))
+        conn.commit()
+        conn.close()
+        st.success("¡Cita agendada correctamente!")
+        st.rerun()
 
 @st.dialog("⚙️ Detalle de Cita")
 def modal_editar_cita(cita_id):
@@ -434,9 +472,9 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-        # 1. AGENDA INTERACTIVA CON ETIQUETAS
+        # 1. AGENDA EN ESPAÑOL Y RECEPTIVA A PULSACIONES
 with opcion[0]:
-    st.subheader("Agenda Semanal de Citas")
+    st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''SELECT c.id, c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.color, s.precio, c.estado_cobro, c.etiqueta
@@ -459,24 +497,40 @@ with opcion[0]:
         })
 
     cal_options = {
+        "locale": "es",
         "initialView": "timeGridWeek",
         "firstDay": 1,
-        "slotMinTime": "08:00:00",
+        "allDaySlot": False,
+        "slotMinTime": "08:30:00",
         "slotMaxTime": "20:30:00",
+        "slotDuration": "00:30:00",
+        "height": "auto",
+        "selectable": True,
         "headerToolbar": {
-            "left": "prev,next today",
+            "left": "prev,next",
             "center": "title",
-            "right": "timeGridWeek,timeGridDay,dayGridMonth"
+            "right": "timeGridWeek,timeGridDay"
+        },
+        "buttonText": {
+            "today": "Hoy",
+            "week": "Semana",
+            "day": "Día"
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_main")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v3")
 
+    # DETECTOR DE PULSACIÓN EN CITA EXISTENTE
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
         if raw_id.startswith("cita_"):
             c_id = int(raw_id.replace("cita_", ""))
             modal_editar_cita(c_id)
+
+    # DETECTOR DE PULSACIÓN EN HORA VACÍA (PARA CREAR CITA)
+    if state.get("dateClick"):
+        click_str = state["dateClick"]["date"]
+        modal_crear_cita(click_str)
 
 # 2. CAJA & COBROS
 with opcion[1]:
@@ -521,8 +575,6 @@ with opcion[1]:
 # 3. FIRMA DIGITAL DE CONSENTIMIENTOS Y RGPD
 with opcion[2]:
     st.subheader("✍️ Firma Digital de Consentimiento Informado & RGPD")
-    st.info("Pasa la tablet o el móvil a la clienta para confirmar sus datos y firmar antes del tratamiento.")
-
     conn = sqlite3.connect(DB_NAME)
     df_cli_select = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
     conn.close()
@@ -537,7 +589,7 @@ with opcion[2]:
         """)
 
         nombre_firma = st.text_input("Escribe tu Nombre Completo como Firma Digital *")
-        chk_rgpd = st.checkbox("Acepto la Política de Protección de Datos (RGPD) y tratamiento de datos personales.", value=True)
+        chk_rgpd = st.checkbox("Acepto la Política de Protección de Datos (RGPD).", value=True)
 
         if st.button("✍️ Guardar Firma de Consentimiento", use_container_width=True):
             if nombre_firma:
@@ -547,13 +599,12 @@ with opcion[2]:
                                (c_sel, tipo_trat, datetime.date.today().strftime("%Y-%m-%d"), 1 if chk_rgpd else 0, nombre_firma))
                 conn.commit()
                 conn.close()
-                st.success("¡Consentimiento firmado y guardado en el expediente de la clienta!")
+                st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
 
 # 4. LISTA DE ESPERA
 with opcion[3]:
     st.subheader("⏳ Lista de Espera de Citas")
-    
     with st.expander("➕ Añadir Clienta a Lista de Espera", expanded=True):
         conn = sqlite3.connect(DB_NAME)
         df_c = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
@@ -563,7 +614,7 @@ with opcion[3]:
         if not df_c.empty and not df_s.empty:
             c_le = st.selectbox("Clienta", options=df_c["id"], format_func=lambda x: df_c[df_c["id"]==x]["nom"].values[0])
             s_le = st.selectbox("Tratamiento Deseado", options=df_s["id"], format_func=lambda x: df_s[df_s["id"]==x]["nombre"].values[0])
-            pref_h = st.text_input("Preferencia Horaria", placeholder="Ej. Tardes a partir de las 17h o viernes mañana")
+            pref_h = st.text_input("Preferencia Horaria", placeholder="Ej. Tardes a partir de las 17h")
 
             if st.button("➕ Guardar en Lista de Espera"):
                 conn = sqlite3.connect(DB_NAME)
@@ -581,7 +632,7 @@ with opcion[3]:
     conn.close()
     st.dataframe(df_le_view, use_container_width=True)
 
-# 5. FISCAL & TRIMESTRAL
+# 5. FISCAL
 with opcion[4]:
     st.subheader("🏛️ Panel Fiscal y Estimación de Trimestres")
     col_f1, col_f2 = st.columns(2)
@@ -608,7 +659,7 @@ with opcion[4]:
     with c2: st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_est:.2f} €</h2></div>", unsafe_allow_html=True)
     with c3: st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rend_net:.2f} €</h2></div>", unsafe_allow_html=True)
 
-# 6. GASTOS & FACTURAS
+# 6. GASTOS
 with opcion[5]:
     st.subheader("📉 Gastos del Local y Compras")
     conn = sqlite3.connect(DB_NAME)
@@ -616,7 +667,7 @@ with opcion[5]:
     conn.close()
     st.dataframe(df_g, use_container_width=True)
 
-# 7. STOCK TOP
+# 7. STOCK
 with opcion[6]:
     st.subheader("📦 Control de Stock Seleccionado")
     conn = sqlite3.connect(DB_NAME)
@@ -624,7 +675,7 @@ with opcion[6]:
     conn.close()
     st.dataframe(df_st, use_container_width=True)
 
-# 8. MARKETING & REGALOS
+# 8. MARKETING
 with opcion[7]:
     st.subheader("📣 Tarjetas Regalo y Fidelización")
     conn = sqlite3.connect(DB_NAME)
