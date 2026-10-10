@@ -42,19 +42,18 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# CSS Limpio para Móvil
+# ESTILOS CSS ESTÉTICA DULCE Y CUQUI (Comfortaa + Quicksand + Fredoka)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600&family=Quicksand:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Fredoka:wght@400;500;600&family=Quicksand:wght@400;500;600;700&display=swap');
 
     section[data-testid="stSidebar"] { display: none !important; }
     header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
 
     html, body, [class*="css"], .stApp {
         background-color: #0f0e13 !important;
-        color: #f3effa !important;
+        color: #f5f0fb !important;
         font-family: 'Quicksand', sans-serif !important;
-        font-weight: 300 !important;
     }
 
     .block-container {
@@ -68,13 +67,13 @@ st.markdown("""
     h1, h2, h3, .brand-title {
         font-family: 'Comfortaa', cursive !important;
         color: #e6c566 !important;
-        letter-spacing: 0.3px !important;
-        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        font-weight: 700 !important;
     }
 
     .brand-subtext {
-        font-family: 'Quicksand', sans-serif;
-        font-size: 10px;
+        font-family: 'Fredoka', sans-serif;
+        font-size: 11px;
         color: #d4af37;
         letter-spacing: 2px;
         margin-top: -2px;
@@ -83,65 +82,78 @@ st.markdown("""
     }
 
     .card-metric {
-        background: linear-gradient(145deg, #191724 0%, #12101a 100%);
-        border: 1px solid #332d42;
-        border-left: 4px solid #e6c566;
-        border-radius: 12px;
-        padding: 12px 15px;
+        background: linear-gradient(145deg, #1b1828 0%, #13111e 100%);
+        border: 1px solid #3c334d;
+        border-left: 5px solid #e6c566;
+        border-radius: 16px;
+        padding: 14px 18px;
         text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.35);
     }
 
     .stButton>button {
         background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%) !important;
         color: #1a1600 !important;
         font-family: 'Comfortaa', cursive !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         font-size: 12px !important;
-        padding: 6px 14px !important;
-        border-radius: 16px !important;
+        padding: 8px 16px !important;
+        border-radius: 20px !important;
         border: none !important;
+        box-shadow: 0 3px 10px rgba(230, 197, 102, 0.2) !important;
     }
 
-    /* CALENDARIO */
-    .fc {
-        font-size: 11px !important;
-        font-family: 'Quicksand', sans-serif !important;
-        font-weight: 400 !important;
-    }
-    .fc-event, .fc-event-title, .fc-event-time, .fc-col-header-cell-cushion {
-        font-weight: 400 !important;
+    .stLinkButton>a {
+        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+        color: #ffffff !important;
+        font-family: 'Comfortaa', cursive !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        padding: 8px 16px !important;
+        border-radius: 20px !important;
+        border: none !important;
         text-decoration: none !important;
+        display: block !important;
+        text-align: center !important;
+    }
+
+    /* FULLCALENDAR DULCE Y LEGIBLE */
+    .fc {
+        font-size: 12px !important;
+        font-family: 'Quicksand', sans-serif !important;
+    }
+    .fc-event-title, .fc-event-time {
+        font-family: 'Fredoka', sans-serif !important;
+        font-weight: 500 !important;
     }
     .fc-toolbar-title {
-        font-size: 14px !important;
+        font-size: 15px !important;
         font-family: 'Comfortaa', cursive !important;
         color: #e6c566 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
     .fc-button {
-        padding: 4px 8px !important;
+        padding: 5px 10px !important;
         font-size: 11px !important;
-        border-radius: 8px !important;
-        font-weight: 400 !important;
+        border-radius: 12px !important;
+        font-family: 'Comfortaa', cursive !important;
     }
     .fc-timegrid-slot {
-        height: 24px !important;
+        height: 26px !important;
     }
     .stTabs [data-baseweb="tab-list"] { gap: 4px; }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 10px 10px 0px 0px !important;
-        padding: 6px 10px !important;
+        border-radius: 12px 12px 0px 0px !important;
+        padding: 8px 12px !important;
         background-color: #161420 !important;
         color: #bfa8db !important;
         font-family: 'Comfortaa', cursive !important;
         font-size: 11px !important;
-        font-weight: 400 !important;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #241f33 !important;
+        background-color: #262036 !important;
         color: #e6c566 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -283,7 +295,7 @@ with col_h1:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 10px;">
             <div>
-                <div class="brand-title" style="font-size: 22px; font-weight:600; line-height:1.1;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 24px; font-weight:700; line-height:1.1;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
@@ -302,7 +314,7 @@ opcion = st.tabs([
     "👤 Clientes", 
     "💆‍♀️ Servicios",
     "📦 Stock", 
-    "🏛️ Fiscal", 
+    "🏛️ Fiscal & Trimestral", 
     "📉 Gastos", 
     "⏳ Lista Espera",
     "✍️ Firma & RGPD"
@@ -356,12 +368,12 @@ def modal_crear_cita(fecha_hora_inicio):
         st.success("¡Cita agendada correctamente!")
         st.rerun()
 
-# MODAL DETALLE CITA
+# MODAL DETALLE CITA (BOTÓN WHATSAPP SIEMPRE DISPONIBLE)
 @st.dialog("⚙️ Detalle de Cita")
 def modal_editar_cita(cita_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("""SELECT c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado, c.notas
+    cursor.execute("""SELECT c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado, c.notas, cl.id
                       FROM citas c 
                       JOIN clientes cl ON c.cliente_id = cl.id 
                       JOIN servicios s ON c.servicio_id = s.id 
@@ -373,14 +385,13 @@ def modal_editar_cita(cita_id):
         st.error("No se encontró la cita.")
         return
 
-    f_i, f_f, cl_n, cl_ap, cl_tel, s_n, s_pre, est_c, met_p, monto_c, obs = row
+    f_i, f_f, cl_n, cl_ap, cl_tel, s_n, s_pre, est_c, met_p, monto_c, obs, cl_id = row
     nom_cli = f"{cl_n} {cl_ap or ''}".strip()
     dt_i = datetime.datetime.fromisoformat(f_i)
 
     st.markdown(f"### 💆‍♀️ {s_n}")
     st.markdown(f"👤 **Cliente:** {nom_cli}")
     st.markdown(f"📅 **Fecha:** {dt_i.strftime('%d/%m/%Y')} a las {dt_i.strftime('%H:%M')}h")
-    if cl_tel: st.markdown(f"📱 **Teléfono:** {cl_tel}")
     if obs: st.info(f"📝 **Notas:** {obs}")
 
     st.markdown("---")
@@ -391,16 +402,21 @@ def modal_editar_cita(cita_id):
         if st.button("💶 Cobrar Servicio Ahora", use_container_width=True):
             modal_cobrar_cita(cita_id, nom_cli, s_n, s_pre)
 
-    if cl_tel and str(cl_tel).strip() != "":
+    # BOTÓN DE WHATSAPP MEJORADO (CON O SIN TELÉFONO PREVIO)
+    st.markdown("#### 💬 Recordatorio WhatsApp")
+    tel_destino = cl_tel if (cl_tel and str(cl_tel).strip() != "") else st.text_input("Número WhatsApp Clienta", placeholder="Ej. 612345678", key=f"tel_manual_{cita_id}")
+    
+    if tel_destino:
         txt_wa = (
             f"Hola {nom_cli}! ✨\n\n"
             f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
             f"para el servicio de *{s_n}* el día *{dt_i.strftime('%d/%m/%Y')}* a las *{dt_i.strftime('%H:%M')}h*.\n\n"
             f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
         )
-        url_wa = generar_link_whatsapp(cl_tel, txt_wa)
+        url_wa = generar_link_whatsapp(tel_destino, txt_wa)
         st.link_button("📲 Enviar Recordatorio por WhatsApp", url_wa, use_container_width=True)
 
+    st.markdown("---")
     if st.button("🗑️ Eliminar Cita", use_container_width=True):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -456,7 +472,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-        # 1. AGENDA EN ESPAÑOL
+        # 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -501,7 +517,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v6")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v7")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -590,16 +606,9 @@ with opcion[2]:
             df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
             st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
 
-        st.markdown("---")
-        st.markdown("#### 👑 Top Clientas por Facturación")
-        df_top_cli = df_citas_cob.groupby("cliente")["monto_cobrado"].sum().reset_index().sort_values(by="monto_cobrado", ascending=False).head(5)
-        df_top_cli.columns = ["Clienta", "Total Gastado (€)"]
-        st.dataframe(df_top_cli, use_container_width=True)
-
-# 4. MARKETING & FIDELIZACIÓN COMPLETO (CORREGIDO ERROR PANDAS SQL)
+# 4. MARKETING
 with opcion[3]:
     st.subheader("📣 Módulo de Marketing y Fidelización")
-
     tab_m1, tab_m2, tab_m3 = st.tabs(["🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp", "🎁 Tarjetas Regalo"])
 
     with tab_m1:
@@ -671,25 +680,41 @@ with opcion[6]:
     conn.close()
     st.dataframe(df_st, use_container_width=True)
 
-# 8. FISCAL
+# 8. FISCAL & TRIMESTRAL COMPLETO
 with opcion[7]:
-    st.subheader("🏛️ Panel Fiscal")
+    st.subheader("🏛️ Panel Control Fiscal & Trimestral")
+    col_f1, col_f2 = st.columns(2)
+    with col_f1: anio_f = st.selectbox("Año Fiscal", [2026, 2025])
+    with col_f2: trim_f = st.selectbox("Trimestre a Calcular", ["1T (Ene - Mar)", "2T (Abr - Jun)", "3T (Jul - Sep)", "4T (Oct - Dic)"])
+
     conn = sqlite3.connect(DB_NAME)
     df_f_ing = pd.read_sql_query("SELECT total, metodo_pago FROM facturas", conn)
     df_f_gas = pd.read_sql_query("SELECT base_imponible, iva_porcentaje, total FROM gastos", conn)
     conn.close()
 
-    tot_v = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
-    tot_gb = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
-    tot_gi = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
+    total_ventas = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
+    iva_repercutido = total_ventas * 0.21
 
-    iva_pag = (tot_v * 0.21) - tot_gi
-    rend_net = tot_v - (tot_gb + tot_gi)
+    total_gastos_base = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
+    total_gastos_iva = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
+
+    iva_a_pagar = iva_repercutido - total_gastos_iva
+    rendimiento_neto = total_ventas - (total_gastos_base + total_gastos_iva)
+    irpf_estimado = max(0.0, rendimiento_neto * 0.20)
 
     st.markdown("---")
-    c1, c2 = st.columns(2)
-    with c1: st.metric("📊 IVA a Liquidar (Mod. 303)", f"{iva_pag:.2f} €")
-    with c2: st.metric("💵 Rendimiento Neto Real", f"{rend_net:.2f} €")
+    c_m1, c_m2, c_m3 = st.columns(3)
+    with c_m1:
+        st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{iva_a_pagar:.2f} €</h2><p style='font-size:11px;'>Repercutido - Soportado</p></div>", unsafe_allow_html=True)
+    with c_m2:
+        st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_estimado:.2f} €</h2><p style='font-size:11px;'>20% s/ Rendimiento Neto</p></div>", unsafe_allow_html=True)
+    with c_m3:
+        st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2><p style='font-size:11px;'>Ingresos - Gastos Totales</p></div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if not df_f_ing.empty:
+        csv = df_f_ing.to_csv(index=False).encode('utf-8')
+        st.download_button(label="💾 Exportar Informe CSV para Gestoría", data=csv, file_name=f"Contabilidad_{trim_f[:2]}_{anio_f}.csv", mime='text/csv', use_container_width=True)
 
 # 9. GASTOS
 with opcion[8]:
@@ -732,4 +757,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-    
+                
