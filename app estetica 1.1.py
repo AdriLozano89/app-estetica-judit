@@ -42,38 +42,67 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# ESTILOS CSS LIMPIOS Y ESPACIOSOS (Outfit + Plus Jakarta Sans)
-st.markdown("""
+# GESTIÓN DE SESIÓN Y AUTENTICACIÓN
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = True  # Por defecto activo
+
+# ESTILOS CSS CON MARCA DE AGUA EN FONDO (25% OPACIDAD)
+css_logo_fondo = ""
+if logo_data_uri:
+    css_logo_fondo = f"""
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80vw;
+        max-width: 380px;
+        height: 80vh;
+        max-height: 380px;
+        background-image: url("{logo_data_uri}");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.25 !important;
+        pointer-events: none !important;
+        z-index: 0 !important;
+    }}
+    """
+
+st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
-    section[data-testid="stSidebar"] { display: none !important; }
-    header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
+    {css_logo_fondo}
 
-    /* ESTILO GENERAL DE LA APP */
-    .stApp {
+    section[data-testid="stSidebar"] {{ display: none !important; }}
+    header[data-testid="stHeader"] {{ background-color: transparent !important; z-index: 100 !important; }}
+
+    .stApp {{
         background-color: #0d0c12 !important;
         color: #f7f5fd !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-    }
+    }}
 
-    .block-container {
+    .block-container {{
         padding-top: 1rem !important;
         padding-bottom: 2rem !important;
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
         max-width: 100% !important;
-    }
+        position: relative !important;
+        z-index: 1 !important;
+    }}
 
-    /* TÍTULOS ELEGANTES */
-    h1, h2, h3, .brand-title {
+    h1, h2, h3, .brand-title {{
         font-family: 'Outfit', sans-serif !important;
         color: #e6c566 !important;
         letter-spacing: 0.4px !important;
         font-weight: 600 !important;
-    }
+    }}
 
-    .brand-subtext {
+    .brand-subtext {{
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 11px;
         color: #d4af37;
@@ -81,11 +110,10 @@ st.markdown("""
         margin-top: -2px;
         text-transform: uppercase;
         font-weight: 600;
-    }
+    }}
 
-    /* TARJETAS Y MÉTRICAS */
-    .card-metric {
-        background: linear-gradient(145deg, #181624 0%, #110f1a 100%);
+    .card-metric {{
+        background: rgba(24, 22, 36, 0.85);
         border: 1px solid #332d43;
         border-left: 4px solid #e6c566;
         border-radius: 14px;
@@ -93,10 +121,9 @@ st.markdown("""
         text-align: center;
         box-shadow: 0 4px 14px rgba(0,0,0,0.3);
         margin-bottom: 10px;
-    }
+    }}
 
-    /* BOTONES BONITOS Y ESPACIOSOS */
-    .stButton>button {
+    .stButton>button {{
         background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%) !important;
         color: #1a1600 !important;
         font-family: 'Outfit', sans-serif !important;
@@ -107,9 +134,9 @@ st.markdown("""
         border: none !important;
         box-shadow: 0 3px 10px rgba(230, 197, 102, 0.2) !important;
         width: 100% !important;
-    }
+    }}
 
-    .stLinkButton>a {
+    .stLinkButton>a {{
         background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
         color: #ffffff !important;
         font-family: 'Outfit', sans-serif !important;
@@ -122,47 +149,68 @@ st.markdown("""
         display: block !important;
         text-align: center !important;
         width: 100% !important;
-    }
+    }}
 
-    /* PESTAÑAS SUPERIORES */
-    .stTabs [data-baseweb="tab-list"] { 
+    .stTabs [data-baseweb="tab-list"] {{ 
         gap: 6px; 
         overflow-x: auto;
-    }
-    .stTabs [data-baseweb="tab"] {
+    }}
+    .stTabs [data-baseweb="tab"] {{
         border-radius: 10px 10px 0px 0px !important;
         padding: 10px 14px !important;
-        background-color: #151321 !important;
+        background-color: rgba(21, 19, 33, 0.9) !important;
         color: #bfa8db !important;
         font-family: 'Outfit', sans-serif !important;
         font-size: 12px !important;
         font-weight: 500 !important;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #252035 !important;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: rgba(37, 32, 53, 0.95) !important;
         color: #e6c566 !important;
         font-weight: 600 !important;
-    }
+    }}
 
-    /* CALENDARIO FULLCALENDAR */
-    .fc {
+    .fc {{
         font-size: 12px !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-    }
-    .fc-toolbar-title {
+    }}
+    .fc-toolbar-title {{
         font-size: 16px !important;
         font-family: 'Outfit', sans-serif !important;
         color: #e6c566 !important;
         font-weight: 600 !important;
-    }
-    .fc-button {
+    }}
+    .fc-button {{
         padding: 6px 12px !important;
         font-size: 12px !important;
         border-radius: 10px !important;
         font-family: 'Outfit', sans-serif !important;
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
+
+# --- CONTROL DE LOGIN ---
+if not st.session_state["authenticated"]:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
+    with col_l2:
+        st.markdown("""
+            <div class='card-metric'>
+                <h2>Judit Domingo</h2>
+                <p class='brand-subtext'>CENTRE D'ESTÈTICA</p>
+                <hr style='border-color: #332d43;'>
+            </div>
+        """, unsafe_allow_html=True)
+        usr = st.text_input("Usuario")
+        pwd = st.text_input("Contraseña", type="password")
+        if st.button("🔑 Iniciar Sesión", use_container_width=True):
+            if usr == "judit" and pwd == "1234":
+                st.session_state["authenticated"] = True
+                st.success("¡Bienvenida!")
+                st.rerun()
+            else:
+                st.error("Usuario o contraseña incorrectos.")
+    st.stop()
 
 # --- BASE DE DATOS E INICIALIZACIÓN ---
 def init_db():
@@ -295,7 +343,7 @@ def init_db():
 
 init_db()
 
-# --- HEADER SUPERIOR ---
+# --- HEADER SUPERIOR CON BOTÓN DE SALIR FUNCIONAL ---
 col_h1, col_h2 = st.columns([7, 3])
 with col_h1:
     st.markdown("""
@@ -307,7 +355,7 @@ with col_h1:
         </div>
     """, unsafe_allow_html=True)
 with col_h2:
-    if st.button("🔒 Salir", use_container_width=True):
+    if st.button("🔒 Salir", use_container_width=True, key="btn_logout_top"):
         st.session_state["authenticated"] = False
         st.rerun()
 
@@ -456,28 +504,8 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
                 cursor.execute("UPDATE cajas SET abonos_efectivo=?, abonos_tarjeta=?, abonos_bizum=?, ingresos=?, total_caja=?, estado='Abierta' WHERE id=?",
                                (ef + (monto if metodo == "Efectivo" else 0),
                                 tar + (monto if metodo == "Tarjeta" else 0),
-                                biz + (monto if metodo == "Bizum" else 0),
-                                ing + monto, tot + monto, c_id))
-            else:
-                cursor.execute("INSERT INTO cajas (fecha, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja, estado) VALUES (?,?,?,?,?,?,'Abierta')",
-                               (hoy_str, monto if metodo == "Efectivo" else 0, monto if metodo == "Tarjeta" else 0, monto if metodo == "Bizum" else 0, monto, monto))
-
-        cursor.execute("SELECT hash_registro FROM facturas ORDER BY id DESC LIMIT 1")
-        last_row = cursor.fetchone()
-        hash_ant = last_row[0] if last_row else "00000000000000000000000000000000"
-        num_f = f"F{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
-        fecha_h = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        cadena = f"{num_f}|{fecha_h}|{monto:.2f}|{hash_ant}"
-        hash_reg = hashlib.sha256(cadena.encode('utf-8')).hexdigest()
-        
-        cursor.execute("INSERT INTO facturas (num_factura, fecha_hora, concepto, total, metodo_pago, hash_registro) VALUES (?,?,?,?,?,?)",
-                       (num_f, fecha_h, f"{servicio_nom} - {cliente_nom}", monto, metodo, hash_reg))
-
-        conn.commit()
-        conn.close()
-        st.success("¡Cobro registrado!")
-        st.rerun()
-        # 1. AGENDA
+                                biz + (monto if metodo == "Bizum" else 0)
+                                # 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -522,7 +550,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v10")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v11")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -774,4 +802,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-        
+                
