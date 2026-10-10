@@ -42,7 +42,7 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# Estilos CSS Avanzados: Tipografía Moderna, Menú Superior y Estética Profesional
+# Estilos CSS Avanzados
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
@@ -120,7 +120,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS CON MIGRACIÓN AUTOMÁTICA COMPLETA ---
+# --- BASE DE DATOS CON MIGRACIÓN COMPLETA (CITAS, CAJAS Y FACTURAS) ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -163,7 +163,7 @@ def init_db():
                         FOREIGN KEY(cliente_id) REFERENCES clientes(id),
                         FOREIGN KEY(servicio_id) REFERENCES servicios(id))''')
 
-    # MIGRADOR AUTOMÁTICO TABLA CITAS
+    # MIGRADOR TABLA CITAS
     cursor.execute("PRAGMA table_info(citas)")
     cols_citas = [c[1] for c in cursor.fetchall()]
     if "estado_cobro" not in cols_citas:
@@ -185,7 +185,7 @@ def init_db():
                         total_caja REAL DEFAULT 0.0,
                         estado TEXT DEFAULT 'Cerrada')''')
 
-    # MIGRADOR AUTOMÁTICO TABLA CAJAS
+    # MIGRADOR TABLA CAJAS
     cursor.execute("PRAGMA table_info(cajas)")
     cols_cajas = [c[1] for c in cursor.fetchall()]
     if "abonos_tarjeta" not in cols_cajas:
@@ -201,6 +201,12 @@ def init_db():
                         total REAL,
                         metodo_pago TEXT,
                         hash_registro TEXT)''')
+
+    # MIGRADOR TABLA FACTURAS
+    cursor.execute("PRAGMA table_info(facturas)")
+    cols_fact = [c[1] for c in cursor.fetchall()]
+    if "metodo_pago" not in cols_fact:
+        cursor.execute("ALTER TABLE facturas ADD COLUMN metodo_pago TEXT")
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS gastos (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -342,7 +348,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-# 1. AGENDA
+        # 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -564,4 +570,3 @@ with opcion[7]:
     df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
     conn.close()
     st.dataframe(df_serv, use_container_width=True)
-    
