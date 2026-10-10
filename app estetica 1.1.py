@@ -7,7 +7,7 @@ import hashlib
 import os
 import base64
 import urllib.parse
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter
 import io
 
 # Configuración inicial de la página
@@ -47,25 +47,25 @@ logo_data_uri, ruta_logo_file = cargar_logo_base64()
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = True
 
-# CSS CON LOGO DE FONDO GIGANTE Y FUENTE ESTILO BALQIS (Great Vibes / Alex Brush)
+# LOGO DE FONDO OCUPANDO TODA LA PÁGINA CON OPACIDAD AJUSTADA
 css_logo_fondo = ""
 if logo_data_uri:
     css_logo_fondo = f"""
     .stApp::before {{
         content: "";
         position: fixed;
-        top: 52%;
+        top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 85vw;
-        max-width: 650px;
-        height: 75vh;
-        max-height: 650px;
+        width: 95vw;
+        max-width: 900px;
+        height: 85vh;
+        max-height: 900px;
         background-image: url("{logo_data_uri}");
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        opacity: 0.30 !important;
+        opacity: 0.18 !important;
         pointer-events: none !important;
         z-index: 0 !important;
     }}
@@ -89,14 +89,13 @@ st.markdown(f"""
     .block-container {{
         padding-top: 0.8rem !important;
         padding-bottom: 1rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
         max-width: 100% !important;
         position: relative !important;
         z-index: 1 !important;
     }}
 
-    /* TÍTULOS CURSIVOS ELEGANTES ESTILO BALQIS */
     h1, h2, h3, .brand-title {{
         font-family: 'Great Vibes', 'Alex Brush', cursive !important;
         color: #e6c566 !important;
@@ -173,16 +172,15 @@ st.markdown(f"""
         font-weight: 700 !important;
     }}
 
-    /* FIX HORAS Y TEXTOS EN CALENDARIO */
     .fc {{
         font-size: 12px !important;
         font-family: 'Quicksand', sans-serif !important;
-        background-color: rgba(15, 14, 22, 0.85) !important;
+        background-color: rgba(15, 14, 22, 0.88) !important;
         border-radius: 12px;
         padding: 6px;
     }}
     .fc-timegrid-slot {{
-        height: 38px !important;
+        height: 42px !important;
     }}
     .fc-timegrid-slot-label-frame {{
         text-align: center !important;
@@ -394,44 +392,56 @@ def generar_link_whatsapp(telefono, texto_mensaje):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# GENERADOR DE IMAGEN TARJETA REGALO FÍSICA
+# GENERADOR DE TARJETA REGALO ESPECTACULAR (LOGO EN FONDO COMPLETO 100%)
 def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, importe):
-    ancho, alto = 1000, 580
-    img = Image.new("RGB", (ancho, alto), color="#0f0e13")
-    draw = ImageDraw.Draw(img)
+    ancho, alto = 1200, 700
+    base_img = Image.new("RGBA", (ancho, alto), (15, 14, 19, 255))
 
-    draw.rectangle([20, 20, ancho-20, alto-20], outline="#e6c566", width=4)
-    draw.rectangle([30, 30, ancho-30, alto-30], outline="#ba9530", width=2)
-
+    # Cargar logo cubriendo todo el fondo si existe
     if ruta_logo_file and os.path.exists(ruta_logo_file):
         try:
             logo_img = Image.open(ruta_logo_file).convert("RGBA")
-            logo_img.thumbnail((260, 260))
-            alpha = logo_img.split()[3]
-            alpha = alpha.point(lambda p: int(p * 0.25))
-            logo_img.putalpha(alpha)
+            # Escalar logo para ocupar casi todo el lienzo
+            logo_img.thumbnail((ancho - 100, alto - 100))
             pos_x = (ancho - logo_img.width) // 2
             pos_y = (alto - logo_img.height) // 2
-            img.paste(logo_img, (pos_x, pos_y), logo_img)
+            base_img.paste(logo_img, (pos_x, pos_y), logo_img)
         except Exception:
             pass
 
-    draw.text((ancho//2, 70), "Judit Domingo", fill="#e6c566", anchor="mm", font_size=52)
-    draw.text((ancho//2, 120), "CENTRE D'ESTÈTICA — TARJETA REGALO", fill="#d4af37", anchor="mm", font_size=20)
+    # Capa translúcida para garantizar la máxima legibilidad
+    overlay = Image.new("RGBA", (ancho, alto), (0, 0, 0, 0))
+    draw_overlay = ImageDraw.Draw(overlay)
 
-    draw.text((80, 200), f"Para: {beneficiario}", fill="#ffffff", font_size=30)
-    draw.text((80, 260), f"De: {comprador}", fill="#dcd6f7", font_size=26)
-    draw.text((80, 320), f"Tratamiento / Regalo: {concepto}", fill="#e6c566", font_size=26)
+    # Marco exterior dorado elegante
+    draw_overlay.rectangle([30, 30, ancho-30, alto-30], outline="#e6c566", width=5)
+    draw_overlay.rectangle([42, 42, ancho-42, alto-42], outline="#ba9530", width=2)
 
-    draw.rectangle([ancho-320, alto-160, ancho-60, alto-60], fill="#1e192c", outline="#e6c566", width=2)
-    draw.text((ancho-190, alto-110), f"{importe:.2f} €", fill="#e6c566", anchor="mm", font_size=38)
+    # Tarjeta translúcida central (Fondo oscuro blanquecino/dorado suave con opacidad)
+    draw_overlay.rectangle([80, 80, ancho-80, alto-80], fill=(15, 14, 22, 190), outline="#e6c566", width=2)
 
-    draw.text((80, alto-80), f"Código Regalo: {codigo}", fill="#a29bfe", font_size=22)
+    # Combinar capas
+    final_img = Image.alpha_composite(base_img, overlay)
+    draw = ImageDraw.Draw(final_img)
+
+    # Textos principales
+    draw.text((ancho//2, 130), "Judit Domingo", fill="#e6c566", anchor="mm", font_size=58)
+    draw.text((ancho//2, 185), "CENTRE D'ESTÈTICA — TARJETA REGALO", fill="#d4af37", anchor="mm", font_size=22)
+
+    draw.text((120, 270), f"Para: {beneficiario}", fill="#ffffff", font_size=34)
+    draw.text((120, 335), f"De: {comprador}", fill="#dcd6f7", font_size=28)
+    draw.text((120, 400), f"Tratamiento: {concepto}", fill="#e6c566", font_size=28)
+
+    # Caja del importe destacado
+    draw.rectangle([ancho-400, alto-210, ancho-120, alto-100], fill=(30, 25, 45, 230), outline="#e6c566", width=3)
+    draw.text((ancho-260, alto-155), f"{importe:.2f} €", fill="#e6c566", anchor="mm", font_size=42)
+
+    draw.text((120, alto-130), f"Código: {codigo}", fill="#a29bfe", font_size=24)
 
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    final_img.convert("RGB").save(buf, format="PNG")
     return buf.getvalue()
-# MODAL NUEVA CITA
+# MODALES CITA
 @st.dialog("➕ Agendar Nueva Cita")
 def modal_crear_cita(fecha_hora_inicio):
     conn = sqlite3.connect(DB_NAME)
@@ -473,7 +483,6 @@ def modal_crear_cita(fecha_hora_inicio):
         st.success("¡Cita agendada correctamente!")
         st.rerun()
 
-# MODAL DETALLE CITA
 @st.dialog("⚙️ Detalle de Cita")
 def modal_editar_cita(cita_id):
     conn = sqlite3.connect(DB_NAME)
@@ -572,9 +581,55 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         st.success("¡Cobro registrado!")
         st.rerun()
 
-# 1. AGENDA
+# MODAL EDITAR TARJETA REGALO
+@st.dialog("✏️ Editar Tarjeta Regalo")
+def modal_editar_tarjeta_regalo(tr_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT codigo, comprador, beneficiario, concepto, saldo_actual, fecha_caducidad FROM tarjetas_regalo WHERE id=?", (tr_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        st.error("No se encontró la tarjeta.")
+        return
+
+    cod, comp, ben, conc, saldo, cad = row
+    st.markdown(f"### 🎁 Tarjeta `{cod}`")
+    
+    e_comp = st.text_input("Comprador", value=comp)
+    e_ben = st.text_input("Beneficiario", value=ben)
+    e_conc = st.text_input("Concepto", value=conc)
+    e_saldo = st.number_input("Saldo Disponible (€)", value=float(saldo), step=5.0)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("💾 Guardar Cambios", use_container_width=True, type="primary"):
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE tarjetas_regalo SET comprador=?, beneficiario=?, concepto=?, saldo_actual=? WHERE id=?",
+                           (e_comp, e_ben, e_conc, e_saldo, tr_id))
+            conn.commit()
+            conn.close()
+            st.success("¡Tarjeta actualizada!")
+            st.rerun()
+    with col2:
+        if st.button("🗑️ Eliminar Tarjeta", use_container_width=True):
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM tarjetas_regalo WHERE id=?", (tr_id,))
+            conn.commit()
+            conn.close()
+            st.success("Tarjeta eliminada.")
+            st.rerun()
+
+# 1. AGENDA CON CONMUTADOR MÓVIL / ORDENADOR A PANTALLA COMPLETA
 with opcion[0]:
-    st.subheader("Agenda de Citas")
+    col_ag1, col_ag2 = st.columns([7, 3])
+    with col_ag1: st.subheader("Agenda de Citas")
+    with col_ag2:
+        modo_vista = st.radio("Pantalla:", ["📱 Móvil", "💻 Ordenador / Completa"], horizontal=True)
+
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''SELECT c.id, c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.color, s.precio, c.estado_cobro
@@ -595,6 +650,8 @@ with opcion[0]:
             "borderColor": color
         })
 
+    alto_cal = 650 if modo_vista == "📱 Móvil" else 900
+
     cal_options = {
         "locale": "es",
         "initialView": "timeGridWeek",
@@ -614,7 +671,7 @@ with opcion[0]:
             "month": "numeric",
             "omitCommas": True
         },
-        "height": 750,
+        "height": alto_cal,
         "selectable": True,
         "headerToolbar": {
             "left": "prev,next",
@@ -628,7 +685,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v15")
+    state = calendar(events=events, options=cal_options, key=f"koibox_cal_{modo_vista}")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -639,7 +696,7 @@ with opcion[0]:
     if state.get("dateClick"):
         click_str = state["dateClick"]["date"]
         modal_crear_cita(click_str)
-# 2. CAJA & COBROS
+        # 2. CAJA & COBROS
 with opcion[1]:
     st.subheader("Arqueo de Caja del Día")
     hoy_str = datetime.date.today().strftime("%Y-%m-%d")
@@ -733,7 +790,7 @@ with opcion[2]:
             df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
             st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
 
-# 4. MARKETING
+# 4. MARKETING CON EDICIÓN Y BORRADO DE TARJETAS REGALO
 with opcion[3]:
     st.subheader("📣 Módulo de Marketing y Fidelización")
     tab_m1, tab_m2, tab_m3 = st.tabs(["🎁 Emisión de Tarjeta Regalo", "🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp"])
@@ -763,11 +820,11 @@ with opcion[3]:
                 st.success(f"¡Tarjeta Regalo {cod_tr} Emitida Correctamente!")
 
                 img_bytes = generar_tarjeta_regalo_img(cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe)
-                st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Física", use_container_width=True)
+                st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Lujosa", use_container_width=True)
 
                 col_d1, col_d2 = st.columns(2)
                 with col_d1:
-                    st.download_button("📥 Descargar Tarjeta en PNG (Para Imprimir)", data=img_bytes, file_name=f"Tarjeta_Regalo_{cod_tr}.png", mime="image/png", use_container_width=True)
+                    st.download_button("📥 Descargar Tarjeta PNG (Para Imprimir)", data=img_bytes, file_name=f"Tarjeta_Regalo_{cod_tr}.png", mime="image/png", use_container_width=True)
                 with col_d2:
                     if tr_tel_envio:
                         msg_tr = f"¡Hola {tr_beneficiario}! 🎁 Te han regalado una Tarjeta Regalo en *Judit Domingo Centre d'Estètica* por valor de *{tr_importe:.2f}€* (*{tr_concepto}*). ¡Llámanos para agendar tu cita!"
@@ -777,9 +834,25 @@ with opcion[3]:
         st.markdown("---")
         st.markdown("### 📋 Tarjetas Regalo Emitidas")
         conn = sqlite3.connect(DB_NAME)
-        df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', concepto as 'Tratamiento', saldo_actual as 'Saldo Disponible (€)', fecha_caducidad as 'Caducidad' FROM tarjetas_regalo WHERE estado='Activa' ORDER BY id DESC", conn)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, codigo, comprador, beneficiario, concepto, saldo_actual, fecha_caducidad FROM tarjetas_regalo WHERE estado='Activa' ORDER BY id DESC")
+        tr_rows = cursor.fetchall()
         conn.close()
-        st.dataframe(df_tr_list, use_container_width=True)
+
+        if not tr_rows:
+            st.info("No hay tarjetas regalo emitidas aún.")
+        else:
+            for tr_item in tr_rows:
+                tr_id, t_cod, t_comp, t_ben, t_conc, t_saldo, t_cad = tr_item
+                col_t1, col_t2, col_t3 = st.columns([5, 3, 2])
+                with col_t1:
+                    st.markdown(f"🎁 **{t_cod}** — *{t_ben}* (De: {t_comp})")
+                    st.caption(f"Tratamiento: {t_conc} | Caduca: {t_cad}")
+                with col_t2:
+                    st.markdown(f"💰 **Saldo:** {t_saldo:.2f} €")
+                with col_t3:
+                    if st.button("✏️ Gestor / Borrar", key=f"btn_edit_tr_{tr_id}"):
+                        modal_editar_tarjeta_regalo(tr_id)
 
     with tab_m2:
         st.markdown("### 🎂 Próximos Cumpleaños")
@@ -915,4 +988,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-    
+                
