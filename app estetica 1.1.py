@@ -394,22 +394,19 @@ def generar_link_whatsapp(telefono, texto_mensaje):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# GENERADOR DE IMAGEN TARJETA REGALO FÍSICA (Fondo Negro + Bordes Dorados)
+# GENERADOR DE IMAGEN TARJETA REGALO FÍSICA
 def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, importe):
     ancho, alto = 1000, 580
     img = Image.new("RGB", (ancho, alto), color="#0f0e13")
     draw = ImageDraw.Draw(img)
 
-    # Marco dorado doble
     draw.rectangle([20, 20, ancho-20, alto-20], outline="#e6c566", width=4)
     draw.rectangle([30, 30, ancho-30, alto-30], outline="#ba9530", width=2)
 
-    # Pegar Logo transparente al centro si existe
     if ruta_logo_file and os.path.exists(ruta_logo_file):
         try:
             logo_img = Image.open(ruta_logo_file).convert("RGBA")
             logo_img.thumbnail((260, 260))
-            # Crear marca de agua con opacidad suave
             alpha = logo_img.split()[3]
             alpha = alpha.point(lambda p: int(p * 0.25))
             logo_img.putalpha(alpha)
@@ -419,7 +416,6 @@ def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, import
         except Exception:
             pass
 
-    # Textos elegantes
     draw.text((ancho//2, 70), "Judit Domingo", fill="#e6c566", anchor="mm", font_size=52)
     draw.text((ancho//2, 120), "CENTRE D'ESTÈTICA — TARJETA REGALO", fill="#d4af37", anchor="mm", font_size=20)
 
@@ -427,7 +423,6 @@ def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, import
     draw.text((80, 260), f"De: {comprador}", fill="#dcd6f7", font_size=26)
     draw.text((80, 320), f"Tratamiento / Regalo: {concepto}", fill="#e6c566", font_size=26)
 
-    # Valor e Importe destacado
     draw.rectangle([ancho-320, alto-160, ancho-60, alto-60], fill="#1e192c", outline="#e6c566", width=2)
     draw.text((ancho-190, alto-110), f"{importe:.2f} €", fill="#e6c566", anchor="mm", font_size=38)
 
@@ -517,8 +512,8 @@ def modal_editar_cita(cita_id):
     tel_destino = cl_tel if (cl_tel and str(cl_tel).strip() != "") else st.text_input("Número WhatsApp Clienta", placeholder="Ej. 612345678", key=f"tel_manual_{cita_id}")
     
     if tel_destino:
-        txt_wa = (
-    # 1. AGENDA REPARADA Y AMPLIA (ALTURA COMPLETA Y SIN TEXTOS DUPLICADOS)
+        txt_wa = f"Hola {nom_cli}! ✨\n\nTe recordamos tu cita en *Judit Domingo - Centre d'Estètica* para el servicio de *{s_n}* el día *{dt_i.strftime('%d/%m/%Y')}* a las *{dt_i.strftime('%H:%M')}h*.\n\nPor favor, confírmanos si puedes 
+# 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -574,7 +569,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v13")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v14")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -680,7 +675,7 @@ with opcion[2]:
             df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
             st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
 
-# 4. MARKETING Y CREACIÓN DE TARJETAS REGALO FÍSICAS IMPRIMIBLES
+# 4. MARKETING
 with opcion[3]:
     st.subheader("📣 Módulo de Marketing y Fidelización")
     tab_m1, tab_m2, tab_m3 = st.tabs(["🎁 Emisión de Tarjeta Regalo", "🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp"])
@@ -709,7 +704,6 @@ with opcion[3]:
                 conn.close()
                 st.success(f"¡Tarjeta Regalo {cod_tr} Emitida Correctamente!")
 
-                # Generar Imagen Tarjeta Física
                 img_bytes = generar_tarjeta_regalo_img(cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe)
                 st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Física", use_container_width=True)
 
