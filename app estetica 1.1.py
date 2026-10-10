@@ -47,7 +47,6 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
-    /* Ocultar barra lateral por defecto para dar espacio al menú superior */
     section[data-testid="stSidebar"] { display: none !important; }
     header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
 
@@ -63,33 +62,10 @@ st.markdown("""
         max-width: 95% !important;
     }
 
-    /* Tipografía para Títulos */
     h1, h2, h3, .brand-title {
         font-family: 'Playfair Display', serif !important;
         color: #d4af37 !important;
         letter-spacing: 0.5px !important;
-    }
-
-    /* Header Superior */
-    .top-header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: linear-gradient(180deg, #161616 0%, #111111 100%);
-        border: 1px solid #2a2a2a;
-        border-bottom: 2px solid #d4af37;
-        padding: 12px 25px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-    }
-
-    .brand-logo-text {
-        font-family: 'Playfair Display', serif;
-        font-size: 24px;
-        color: #d4af37;
-        font-weight: 600;
-        margin: 0;
     }
 
     .brand-subtext {
@@ -101,16 +77,6 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* Tarjetas de Contenido Estilizadas */
-    .card-modern {
-        background: #141414;
-        border: 1px solid #282828;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        margin-bottom: 15px;
-    }
-
     .card-metric {
         background: linear-gradient(145deg, #181818 0%, #111111 100%);
         border: 1px solid #333333;
@@ -120,7 +86,6 @@ st.markdown("""
         text-align: center;
     }
 
-    /* Botones */
     .stButton>button {
         background: linear-gradient(135deg, #d4af37 0%, #997819 100%) !important;
         color: #000000 !important;
@@ -131,12 +96,6 @@ st.markdown("""
         border-radius: 8px !important;
         border: none !important;
         box-shadow: 0 3px 8px rgba(212, 175, 55, 0.25) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stButton>button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 5px 12px rgba(212, 175, 55, 0.4) !important;
     }
 
     .stLinkButton>a {
@@ -151,7 +110,6 @@ st.markdown("""
         text-decoration: none !important;
     }
 
-    /* Estilo de Selectbox e Inputs */
     .stTextInput>div>div>input, .stSelectbox>div>div, .stDateInput>div>div>input, .stTimeInput>div>div>input, .stTextArea>div>div>textarea {
         background-color: #1a1a1a !important;
         color: #ffffff !important;
@@ -162,7 +120,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS E INICIALIZACIÓN ---
+# --- BASE DE DATOS CON MIGRACIÓN AUTOMÁTICA DE COLUMNAS ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -204,6 +162,16 @@ def init_db():
                         monto_cobrado REAL DEFAULT 0.0,
                         FOREIGN KEY(cliente_id) REFERENCES clientes(id),
                         FOREIGN KEY(servicio_id) REFERENCES servicios(id))''')
+
+    # MIGRADOR AUTOMÁTICO: Garantiza que las columnas nuevas existan si la DB es antigua
+    cursor.execute("PRAGMA table_info(citas)")
+    cols_citas = [c[1] for c in cursor.fetchall()]
+    if "estado_cobro" not in cols_citas:
+        cursor.execute("ALTER TABLE citas ADD COLUMN estado_cobro TEXT DEFAULT 'Pendiente'")
+    if "metodo_pago" not in cols_citas:
+        cursor.execute("ALTER TABLE citas ADD COLUMN metodo_pago TEXT")
+    if "monto_cobrado" not in cols_citas:
+        cursor.execute("ALTER TABLE citas ADD COLUMN monto_cobrado REAL DEFAULT 0.0")
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS facturas (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -279,7 +247,7 @@ def init_db():
 
 init_db()
 
-# --- HEADER SUPERIOR ELEGANTE CON LOGO ---
+# --- HEADER SUPERIOR ELEGANTE ---
 col_h1, col_h2 = st.columns([8, 2])
 with col_h1:
     st.markdown("""
@@ -295,7 +263,7 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# --- MENÚ DE NAVEGACIÓN SUPERIOR POR PESTAÑAS ---
+# --- MENÚ SUPERIOR ---
 opcion = st.tabs([
     "📅 Agenda", 
     "💳 Caja & Cobros", 
@@ -320,7 +288,6 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
     )
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_raw, encoding='utf-8')}"
 
-# DIÁLOGO EMERGENTE PARA COBRO DE CITAS
 @st.dialog("💶 Cobrar Servicio del Día")
 def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
     st.markdown(f"**Cliente:** {cliente_nom}")
@@ -365,10 +332,10 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
 
         conn.commit()
         conn.close()
-        st.success("¡Cobro registrado correctamente!")
+        st.success("¡Cobro registrado!")
         st.rerun()
 
-# 1. PESTAÑA: AGENDA
+# 1. AGENDA
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -393,7 +360,7 @@ with opcion[0]:
 
     calendar(events=events, options={"initialView": "timeGridWeek", "firstDay": 1, "slotMinTime": "08:00:00", "slotMaxTime": "20:30:00"}, key="koibox_cal")
 
-# 2. PESTAÑA: CAJA & COBROS
+# 2. CAJA & COBROS
 with opcion[1]:
     st.subheader("Arqueo de Caja del Día")
     hoy_str = datetime.date.today().strftime("%Y-%m-%d")
@@ -433,7 +400,7 @@ with opcion[1]:
                 if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
                     modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
 
-# 3. PESTAÑA: FISCAL & TRIMESTRAL (SÚPER ÚTIL PARA TI)
+# 3. FISCAL & TRIMESTRAL
 with opcion[2]:
     st.subheader("🏛️ Panel de Control Fiscal & Estimación de Trimestres")
     
@@ -447,7 +414,7 @@ with opcion[2]:
     conn.close()
 
     total_ventas = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
-    iva_repercutido = total_ventas * 0.21  # Estimación 21%
+    iva_repercutido = total_ventas * 0.21
 
     total_gastos_base = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
     total_gastos_iva = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
@@ -471,7 +438,7 @@ with opcion[2]:
             csv = df_f_ing.to_csv(index=False).encode('utf-8')
             st.download_button(label="💾 Guardar Excel para Gestoría", data=csv, file_name=f"Contabilidad_{trim_f[:2]}_{anio_f}.csv", mime='text/csv')
 
-# 4. PESTAÑA: GASTOS & FACTURAS
+# 4. GASTOS & FACTURAS
 with opcion[3]:
     st.subheader("📉 Registro de Facturas y Compras de Material")
 
@@ -479,115 +446,4 @@ with opcion[3]:
         with st.form("form_gasto"):
             col1, col2 = st.columns(2)
             with col1: prov = st.text_input("Proveedor (Ej. Iberdrola, Almacén Cosmética)")
-            with col2: cat = st.selectbox("Categoría", ["Suministros (Luz/Agua/Teléfono)", "Productos Cosméticos", "Gestoría/Seguros", "Otros"])
-
-            concept = st.text_input("Concepto Factura")
-            col3, col4 = st.columns(2)
-            with col3: base = st.number_input("Base Imponible (€)", value=0.0, step=5.0)
-            with col4: iva = st.selectbox("IVA %", [21.0, 10.0, 4.0, 0.0])
-
-            foto = st.file_uploader("📷 Subir Foto o PDF de la Factura", type=["jpg", "png", "pdf"])
-
-            if st.form_submit_button("💾 Guardar Gasto"):
-                if prov and base > 0:
-                    ruta = None
-                    if foto:
-                        nom_f = f"gasto_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{foto.name.split('.')[-1]}"
-                        ruta = os.path.join(GASTOS_DIR, nom_f)
-                        with open(ruta, "wb") as f: f.write(foto.getbuffer())
-
-                    tot = base * (1 + (iva / 100))
-                    conn = sqlite3.connect(DB_NAME)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO gastos (fecha, proveedor, concepto, categoria, base_imponible, iva_porcentaje, total, ruta_factura) VALUES (?,?,?,?,?,?,?,?)",
-                                   (datetime.date.today().strftime("%Y-%m-%d"), prov, concept, cat, base, iva, tot, ruta))
-                    conn.commit()
-                    conn.close()
-                    st.success("Gasto registrado.")
-                    st.rerun()
-
-    conn = sqlite3.connect(DB_NAME)
-    df_g = pd.read_sql_query("SELECT fecha as 'Fecha', proveedor as 'Proveedor', concepto as 'Concepto', base_imponible as 'Base (€)', total as 'Total (€)' FROM gastos ORDER BY fecha DESC", conn)
-    conn.close()
-    st.dataframe(df_g, use_container_width=True)
-
-# 5. PESTAÑA: STOCK SELECCIONADO (PRODUCTOS CAROS / TOP)
-with opcion[4]:
-    st.subheader("📦 Control de Stock Seleccionado (Productos Top & Cabina)")
-    st.info("Diseñado para controlar únicamente los productos más costosos o importantes sin perder tiempo.")
-
-    with st.expander("➕ Añadir Producto al Inventario", expanded=False):
-        with st.form("form_stock"):
-            col1, col2 = st.columns(2)
-            with col1: nom_prod = st.text_input("Nombre del Producto *")
-            with col2: cat_prod = st.selectbox("Tipo", ["Producto Venta Clienta", "Uso Cabina / Tratamiento"])
-
-            col3, col4, col5 = st.columns(3)
-            with col3: coste = st.number_input("Precio Coste (€)", value=0.0)
-            with col4: pvp = st.number_input("PVP Venta (€)", value=0.0)
-            with col5: unidades = st.number_input("Unidades en Stock", value=5, step=1)
-
-            if st.form_submit_button("💾 Guardar Producto"):
-                if nom_prod:
-                    conn = sqlite3.connect(DB_NAME)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO stock (nombre, categoria, precio_coste, pvp, unidades) VALUES (?,?,?,?,?)",
-                                   (nom_prod, cat_prod, coste, pvp, unidades))
-                    conn.commit()
-                    conn.close()
-                    st.success("Producto añadido.")
-                    st.rerun()
-
-    conn = sqlite3.connect(DB_NAME)
-    df_st = pd.read_sql_query("SELECT id, nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
-    conn.close()
-    st.dataframe(df_st, use_container_width=True)
-
-# 6. PESTAÑA: MARKETING & REGALOS
-with opcion[5]:
-    st.subheader("📣 Gestor de Tarjetas Regalo y Promociones")
-    
-    with st.expander("🎁 Emitir Nueva Tarjeta Regalo", expanded=True):
-        with st.form("form_tr"):
-            cod_tr = f"REGALO-{random.randint(1000, 9999)}"
-            st.text_input("Código de la Tarjeta", value=cod_tr, disabled=True)
-            
-            c1, c2 = st.columns(2)
-            with c1: comprador = st.text_input("Comprador (Quien regala)")
-            with c2: beneficiario = st.text_input("Beneficiaria (Quien la disfruta)")
-
-            c3, c4 = st.columns(2)
-            with c3: concepto_tr = st.text_input("Tratamiento / Concepto", value="Tratamiento Facial / Saldo Libre")
-            with c4: valor_tr = st.number_input("Importe (€)", value=50.0, step=5.0)
-
-            if st.form_submit_button("🎁 Generar Tarjeta Regalo"):
-                if comprador and beneficiario:
-                    conn = sqlite3.connect(DB_NAME)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO tarjetas_regalo (codigo, comprador, beneficiario, concepto, saldo_inicial, saldo_actual, fecha_emision, estado) VALUES (?,?,?,?,?,?,?,'Activa')",
-                                   (cod_tr, comprador, beneficiario, concepto_tr, valor_tr, valor_tr, datetime.date.today().strftime("%Y-%m-%d")))
-                    conn.commit()
-                    conn.close()
-                    st.success(f"¡Tarjeta Regalo {cod_tr} emitida!")
-                    st.rerun()
-
-    conn = sqlite3.connect(DB_NAME)
-    df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', concepto as 'Concepto', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
-    conn.close()
-    st.dataframe(df_tr_list, use_container_width=True)
-
-# 7. PESTAÑA: CLIENTES
-with opcion[6]:
-    st.subheader("Fichero de Clientes")
-    conn = sqlite3.connect(DB_NAME)
-    df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email' FROM clientes ORDER BY id DESC", conn)
-    conn.close()
-    st.dataframe(df_cli, use_container_width=True)
-
-# 8. PESTAÑA: SERVICIOS
-with opcion[7]:
-    st.subheader("Catálogo de Tratamientos")
-    conn = sqlite3.connect(DB_NAME)
-    df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
-    conn.close()
-    st.dataframe(df_serv, use_container_width=True)
+            with col2: cat = st.selectbox("Categoría", ["Suministros (Luz/Agua/Teléfono)", "Productos Cosméticos", "Gest
