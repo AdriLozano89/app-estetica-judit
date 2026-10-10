@@ -7,7 +7,8 @@ import hashlib
 import os
 import base64
 import urllib.parse
-from PIL import Image, ImageDraw, ImageFilter
+import urllib.request
+from PIL import Image, ImageDraw, ImageFont
 import io
 
 # Configuración inicial de la página
@@ -23,6 +24,15 @@ GASTOS_DIR = "facturas_gastos"
 
 if not os.path.exists(GASTOS_DIR):
     os.makedirs(GASTOS_DIR)
+
+# Descargar fuente Great Vibes TTF si no existe localmente para las imágenes
+FONT_PATH = "GreatVibes-Regular.ttf"
+if not os.path.exists(FONT_PATH):
+    try:
+        url_font = "https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf"
+        urllib.request.urlretrieve(url_font, FONT_PATH)
+    except Exception:
+        FONT_PATH = None
 
 # Cargar el logo local en Base64
 def cargar_logo_base64():
@@ -47,7 +57,7 @@ logo_data_uri, ruta_logo_file = cargar_logo_base64()
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = True
 
-# LOGO DE FONDO OCUPANDO TODA LA PÁGINA CON OPACIDAD AJUSTADA
+# LOGO DE FONDO OCUPANDO TODA LA PÁGINA (OPACIDAD AJUSTADA)
 css_logo_fondo = ""
 if logo_data_uri:
     css_logo_fondo = f"""
@@ -57,15 +67,13 @@ if logo_data_uri:
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 95vw;
-        max-width: 900px;
-        height: 85vh;
-        max-height: 900px;
+        width: 100vw;
+        height: 100vh;
         background-image: url("{logo_data_uri}");
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        opacity: 0.18 !important;
+        opacity: 0.16 !important;
         pointer-events: none !important;
         z-index: 0 !important;
     }}
@@ -101,7 +109,7 @@ st.markdown(f"""
         color: #e6c566 !important;
         letter-spacing: 1px !important;
         font-weight: 400 !important;
-        font-size: 38px !important;
+        font-size: 40px !important;
     }}
 
     .brand-subtext {{
@@ -371,7 +379,7 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# NAVEGACIÓN
+# NAVEGACIÓN CON ASISTENTE BOT
 opcion = st.tabs([
     "📅 Agenda", 
     "💳 Caja & Cobros", 
@@ -383,7 +391,8 @@ opcion = st.tabs([
     "🏛️ Fiscal & Trimestral", 
     "📉 Gastos", 
     "⏳ Lista Espera",
-    "✍️ Firma & RGPD"
+    "✍️ Firma & RGPD",
+    "🤖 Bot Asistente"
 ])
 
 def generar_link_whatsapp(telefono, texto_mensaje):
@@ -392,51 +401,52 @@ def generar_link_whatsapp(telefono, texto_mensaje):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# GENERADOR DE TARJETA REGALO ESPECTACULAR (LOGO EN FONDO COMPLETO 100%)
+# GENERADOR DE TARJETA REGALO CON FUENTE BALQIS Y LOGO AL 100% DE FONDO
 def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, importe):
     ancho, alto = 1200, 700
-    base_img = Image.new("RGBA", (ancho, alto), (15, 14, 19, 255))
+    base_img = Image.new("RGBA", (ancho, alto), (12, 10, 16, 255))
 
-    # Cargar logo cubriendo todo el fondo si existe
+    # Cargar logo cubriendo TODO el lienzo (100%)
     if ruta_logo_file and os.path.exists(ruta_logo_file):
         try:
             logo_img = Image.open(ruta_logo_file).convert("RGBA")
-            # Escalar logo para ocupar casi todo el lienzo
-            logo_img.thumbnail((ancho - 100, alto - 100))
-            pos_x = (ancho - logo_img.width) // 2
-            pos_y = (alto - logo_img.height) // 2
-            base_img.paste(logo_img, (pos_x, pos_y), logo_img)
+            # Escalar logo para llenar la tarjeta completamente
+            logo_img = logo_img.resize((ancho, alto), Image.Resampling.LANCZOS)
+            base_img.paste(logo_img, (0, 0), logo_img)
         except Exception:
             pass
 
-    # Capa translúcida para garantizar la máxima legibilidad
+    # Capa de contraste oscuro translúcido para legibilidad perfecta
     overlay = Image.new("RGBA", (ancho, alto), (0, 0, 0, 0))
     draw_overlay = ImageDraw.Draw(overlay)
 
     # Marco exterior dorado elegante
-    draw_overlay.rectangle([30, 30, ancho-30, alto-30], outline="#e6c566", width=5)
-    draw_overlay.rectangle([42, 42, ancho-42, alto-42], outline="#ba9530", width=2)
+    draw_overlay.rectangle([25, 25, ancho-25, alto-25], outline="#e6c566", width=6)
+    draw_overlay.rectangle([35, 35, ancho-35, alto-35], outline="#ba9530", width=2)
 
-    # Tarjeta translúcida central (Fondo oscuro blanquecino/dorado suave con opacidad)
-    draw_overlay.rectangle([80, 80, ancho-80, alto-80], fill=(15, 14, 22, 190), outline="#e6c566", width=2)
+    # Contenedor central semi-transparente
+    draw_overlay.rectangle([70, 70, ancho-70, alto-70], fill=(12, 10, 18, 210), outline="#e6c566", width=2)
 
-    # Combinar capas
     final_img = Image.alpha_composite(base_img, overlay)
     draw = ImageDraw.Draw(final_img)
 
-    # Textos principales
-    draw.text((ancho//2, 130), "Judit Domingo", fill="#e6c566", anchor="mm", font_size=58)
-    draw.text((ancho//2, 185), "CENTRE D'ESTÈTICA — TARJETA REGALO", fill="#d4af37", anchor="mm", font_size=22)
+    # Cargar fuente TTF de Great Vibes si está disponible
+    f_titulo = ImageFont.truetype(FONT_PATH, 70) if (FONT_PATH and os.path.exists(FONT_PATH)) else ImageFont.load_default()
+    f_sub = ImageFont.truetype(FONT_PATH, 35) if (FONT_PATH and os.path.exists(FONT_PATH)) else ImageFont.load_default()
 
-    draw.text((120, 270), f"Para: {beneficiario}", fill="#ffffff", font_size=34)
-    draw.text((120, 335), f"De: {comprador}", fill="#dcd6f7", font_size=28)
-    draw.text((120, 400), f"Tratamiento: {concepto}", fill="#e6c566", font_size=28)
+    # Textos principales sin caracteres extraños
+    draw.text((ancho//2, 130), "Judit Domingo", fill="#e6c566", anchor="mm", font=f_titulo)
+    draw.text((ancho//2, 200), "CENTRE D'ESTETICA - TARJETA REGALO", fill="#d4af37", anchor="mm", font=f_sub)
 
-    # Caja del importe destacado
-    draw.rectangle([ancho-400, alto-210, ancho-120, alto-100], fill=(30, 25, 45, 230), outline="#e6c566", width=3)
-    draw.text((ancho-260, alto-155), f"{importe:.2f} €", fill="#e6c566", anchor="mm", font_size=42)
+    draw.text((110, 280), f"Para: {beneficiario}", fill="#ffffff", font=f_sub)
+    draw.text((110, 350), f"De: {comprador}", fill="#dcd6f7", font=f_sub)
+    draw.text((110, 420), f"Tratamiento: {concepto}", fill="#e6c566", font=f_sub)
 
-    draw.text((120, alto-130), f"Código: {codigo}", fill="#a29bfe", font_size=24)
+    # Caja del importe
+    draw.rectangle([ancho-380, alto-200, ancho-100, alto-90], fill=(28, 22, 40, 240), outline="#e6c566", width=3)
+    draw.text((ancho-240, alto-145), f"{importe:.2f} EUR", fill="#e6c566", anchor="mm", font=f_sub)
+
+    draw.text((110, alto-130), f"Codigo: {codigo}", fill="#a29bfe", font=f_sub)
 
     buf = io.BytesIO()
     final_img.convert("RGB").save(buf, format="PNG")
@@ -582,7 +592,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         st.rerun()
 
 # MODAL EDITAR TARJETA REGALO
-@st.dialog("✏️ Editar Tarjeta Regalo")
+@st.dialog("✏️ Gestor de Tarjeta Regalo")
 def modal_editar_tarjeta_regalo(tr_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -623,7 +633,7 @@ def modal_editar_tarjeta_regalo(tr_id):
             st.success("Tarjeta eliminada.")
             st.rerun()
 
-# 1. AGENDA CON CONMUTADOR MÓVIL / ORDENADOR A PANTALLA COMPLETA
+# 1. AGENDA
 with opcion[0]:
     col_ag1, col_ag2 = st.columns([7, 3])
     with col_ag1: st.subheader("Agenda de Citas")
@@ -790,7 +800,7 @@ with opcion[2]:
             df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
             st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
 
-# 4. MARKETING CON EDICIÓN Y BORRADO DE TARJETAS REGALO
+# 4. MARKETING
 with opcion[3]:
     st.subheader("📣 Módulo de Marketing y Fidelización")
     tab_m1, tab_m2, tab_m3 = st.tabs(["🎁 Emisión de Tarjeta Regalo", "🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp"])
@@ -988,4 +998,38 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-                
+
+# 12. BOT ASISTENTE IA EN LA APP
+with opcion[11]:
+    st.subheader("🤖 Asistente Inteligente del Centro")
+    st.info("Pregunta cualquier duda sobre tratamientos, la gestión de la agenda o solicita ayuda para redactar mensajes.")
+
+    if "bot_chat_history" not in st.session_state:
+        st.session_state["bot_chat_history"] = [
+            {"role": "assistant", "content": "¡Hola Judit y Adri! 💆‍♀️ Soy el asistente virtual del centro. ¿En qué os puedo ayudar hoy?"}
+        ]
+
+    for msg in st.session_state["bot_chat_history"]:
+        if msg["role"] == "user":
+            st.chat_message("user").write(msg["content"])
+        else:
+            st.chat_message("assistant").write(msg["content"])
+
+    if user_prompt := st.chat_input("Escribe tu consulta aquí..."):
+        st.session_state["bot_chat_history"].append({"role": "user", "content": user_prompt})
+        st.chat_message("user").write(user_prompt)
+
+        # Respuesta inteligente contextual para el centro
+        prompt_lower = user_prompt.lower()
+        if "maderoterapia" in prompt_lower:
+            respuesta = "La Maderoterapia corporal es ideal para remodelar, drenar líquidos y reducir celulitis. Se recomiendan sesiones de 45 a 60 minutos con una frecuencia de 1 o 2 veces por semana."
+        elif "caja" in prompt_lower or "cobrar" in prompt_lower:
+            respuesta = "Para realizar un cobro, ve a la pestaña '💳 Caja & Cobros' o pulsa en la cita correspondiente dentro de la agenda y selecciona 'Cobrar Servicio'."
+        elif "cumpleaños" in prompt_lower or "whatsapp" in prompt_lower:
+            respuesta = "Puedes consultar los cumpleaños del mes actual en la pestaña '📣 Marketing & Promo' y enviarles una felicitación con descuento directamente por WhatsApp."
+        else:
+            respuesta = "Entendido. He registrado tu consulta sobre el centro. ¿Necesitas ayuda adicional con alguna cita o tratamiento?"
+
+        st.session_state["bot_chat_history"].append({"role": "assistant", "content": respuesta})
+        st.chat_message("assistant").write(respuesta)
+        
