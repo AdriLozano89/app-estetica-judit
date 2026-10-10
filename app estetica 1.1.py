@@ -42,19 +42,21 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# ESTILOS CSS CON FUENTE POPPINS & MONTSERRAT
+# ESTILOS CSS CON TIPOGRAFÍA REDONDEADA Y ELEGANTE EN TODO EL CUERPO (Montserrat + Nunito)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Nunito:wght@300;400;600;700&display=swap');
 
     section[data-testid="stSidebar"] { display: none !important; }
     header[data-testid="stHeader"] { background-color: transparent !important; z-index: 100 !important; }
 
-    html, body, [class*="css"], .stApp {
+    /* APLICAR NUNITO A TODO EL CUERPO, TABLAS, TEXTOS Y NÚMEROS */
+    html, body, [class*="css"], .stApp, p, span, label, div {
         background-color: #0f0e13 !important;
         color: #f5f0fb !important;
-        font-family: 'Poppins', sans-serif !important;
-        font-weight: 300 !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.2px !important;
     }
 
     .block-container {
@@ -65,28 +67,29 @@ st.markdown("""
         max-width: 100% !important;
     }
 
+    /* TÍTULOS Y CABECERAS REDONDEADAS DULCES */
     h1, h2, h3, .brand-title {
         font-family: 'Montserrat', sans-serif !important;
         color: #e6c566 !important;
         letter-spacing: 0.5px !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
 
     .brand-subtext {
-        font-family: 'Poppins', sans-serif;
-        font-size: 10px;
+        font-family: 'Nunito', sans-serif;
+        font-size: 11px;
         color: #d4af37;
         letter-spacing: 2px;
         margin-top: -2px;
         text-transform: uppercase;
-        font-weight: 500;
+        font-weight: 600;
     }
 
     .card-metric {
         background: linear-gradient(145deg, #1b1828 0%, #13111e 100%);
         border: 1px solid #3c334d;
         border-left: 5px solid #e6c566;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 14px 18px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0,0,0,0.35);
@@ -95,65 +98,68 @@ st.markdown("""
     .stButton>button {
         background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%) !important;
         color: #1a1600 !important;
-        font-family: 'Poppins', sans-serif !important;
-        font-weight: 600 !important;
-        font-size: 12px !important;
-        padding: 8px 16px !important;
-        border-radius: 18px !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        padding: 8px 18px !important;
+        border-radius: 20px !important;
         border: none !important;
+        box-shadow: 0 3px 10px rgba(230, 197, 102, 0.2) !important;
     }
 
     .stLinkButton>a {
         background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
         color: #ffffff !important;
-        font-family: 'Poppins', sans-serif !important;
-        font-weight: 600 !important;
-        font-size: 12px !important;
-        padding: 8px 16px !important;
-        border-radius: 18px !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        padding: 8px 18px !important;
+        border-radius: 20px !important;
         border: none !important;
         text-decoration: none !important;
         display: block !important;
         text-align: center !important;
     }
 
-    /* CALENDARIO ESTILIZADO CON POPPINS */
+    /* FULLCALENDAR ADAPTADO A LA TIPOGRAFÍA REDONDA */
     .fc {
-        font-size: 11px !important;
-        font-family: 'Poppins', sans-serif !important;
+        font-size: 12px !important;
+        font-family: 'Nunito', sans-serif !important;
     }
     .fc-event-title, .fc-event-time {
-        font-family: 'Poppins', sans-serif !important;
-        font-weight: 400 !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-weight: 600 !important;
     }
     .fc-toolbar-title {
         font-size: 15px !important;
         font-family: 'Montserrat', sans-serif !important;
         color: #e6c566 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
     .fc-button {
         padding: 5px 10px !important;
-        font-size: 11px !important;
-        border-radius: 10px !important;
-        font-family: 'Poppins', sans-serif !important;
+        font-size: 12px !important;
+        border-radius: 12px !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-weight: 600 !important;
     }
     .fc-timegrid-slot {
         height: 26px !important;
     }
     .stTabs [data-baseweb="tab-list"] { gap: 4px; }
     .stTabs [data-baseweb="tab"] {
-        border-radius: 10px 10px 0px 0px !important;
+        border-radius: 12px 12px 0px 0px !important;
         padding: 8px 12px !important;
         background-color: #161420 !important;
         color: #bfa8db !important;
-        font-family: 'Poppins', sans-serif !important;
-        font-size: 11px !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
     }
     .stTabs [aria-selected="true"] {
         background-color: #262036 !important;
         color: #e6c566 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -516,7 +522,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v8")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v9")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -568,7 +574,7 @@ with opcion[1]:
                 if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
                     modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
 
-# 3. ESTADÍSTICAS ORGANIZADAS EN SUBGRUPOS ANALÍTICOS
+# 3. ESTADÍSTICAS ORGANIZADAS EN SUBGRUPOS
 with opcion[2]:
     st.subheader("📈 Centro de Analítica & Estadísticas")
     
@@ -590,7 +596,6 @@ with opcion[2]:
     if df_citas_cob.empty:
         st.info("Aún no hay citas cobradas para mostrar las analíticas.")
     else:
-        # SUBGRUPO 1: FINANZAS
         with tab_est1:
             tot_fact = df_citas_cob["monto_cobrado"].sum()
             num_serv = len(df_citas_cob)
@@ -603,7 +608,6 @@ with opcion[2]:
             st.markdown("#### 💳 Distribución por Método de Pago")
             st.bar_chart(df_citas_cob["metodo_pago"].value_counts())
 
-        # SUBGRUPO 2: SERVICIOS
         with tab_est2:
             st.markdown("#### 💆‍♀️ Tratamientos Más Demandados")
             st.bar_chart(df_citas_cob["servicio"].value_counts())
@@ -613,14 +617,12 @@ with opcion[2]:
             df_serv_fact.columns = ["Tratamiento", "Total Ingresado (€)"]
             st.dataframe(df_serv_fact, use_container_width=True)
 
-        # SUBGRUPO 3: CLIENTAS
         with tab_est3:
             st.markdown("#### 👑 Top Clientas por Volumen de Gasto")
             df_top_cli = df_citas_cob.groupby("cliente")["monto_cobrado"].sum().reset_index().sort_values(by="monto_cobrado", ascending=False).head(10)
             df_top_cli.columns = ["Clienta", "Gasto Acumulado (€)"]
             st.dataframe(df_top_cli, use_container_width=True)
 
-        # SUBGRUPO 4: OCUPACIÓN
         with tab_est4:
             st.markdown("#### ⏰ Franjas Horarias con Más Afluencia")
             df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
@@ -772,4 +774,4 @@ with opcion[10]:
                 conn.close()
                 st.success("¡Consentimiento firmado y guardado!")
                 st.rerun()
-            
+                
