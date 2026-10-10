@@ -7,11 +7,10 @@ import hashlib
 import os
 import base64
 import urllib.parse
-import urllib.request
 from PIL import Image, ImageDraw, ImageFont
 import io
 
-# Configuración inicial de la página
+# Configuración inicial
 st.set_page_config(
     page_title="Judit Domingo - Centre d'Estètica",
     page_icon="💆‍♀️",
@@ -24,15 +23,6 @@ GASTOS_DIR = "facturas_gastos"
 
 if not os.path.exists(GASTOS_DIR):
     os.makedirs(GASTOS_DIR)
-
-# Descargar fuente Great Vibes TTF si no existe localmente para las imágenes
-FONT_PATH = "GreatVibes-Regular.ttf"
-if not os.path.exists(FONT_PATH):
-    try:
-        url_font = "https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf"
-        urllib.request.urlretrieve(url_font, FONT_PATH)
-    except Exception:
-        FONT_PATH = None
 
 # Cargar el logo local en Base64
 def cargar_logo_base64():
@@ -57,7 +47,7 @@ logo_data_uri, ruta_logo_file = cargar_logo_base64()
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = True
 
-# LOGO DE FONDO OCUPANDO TODA LA PÁGINA (OPACIDAD AJUSTADA)
+# CSS CON LOGO DE FONDO COMPLETO
 css_logo_fondo = ""
 if logo_data_uri:
     css_logo_fondo = f"""
@@ -73,7 +63,7 @@ if logo_data_uri:
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        opacity: 0.16 !important;
+        opacity: 0.15 !important;
         pointer-events: none !important;
         z-index: 0 !important;
     }}
@@ -95,7 +85,7 @@ st.markdown(f"""
     }}
 
     .block-container {{
-        padding-top: 0.8rem !important;
+        padding-top: 0.5rem !important;
         padding-bottom: 1rem !important;
         padding-left: 0.4rem !important;
         padding-right: 0.4rem !important;
@@ -109,12 +99,12 @@ st.markdown(f"""
         color: #e6c566 !important;
         letter-spacing: 1px !important;
         font-weight: 400 !important;
-        font-size: 40px !important;
+        font-size: 38px !important;
     }}
 
     .brand-subtext {{
         font-family: 'Quicksand', sans-serif;
-        font-size: 11px;
+        font-size: 10px;
         color: #d4af37;
         letter-spacing: 3px;
         margin-top: -8px;
@@ -139,7 +129,7 @@ st.markdown(f"""
         font-family: 'Quicksand', sans-serif !important;
         font-weight: 700 !important;
         font-size: 13px !important;
-        padding: 8px 18px !important;
+        padding: 8px 16px !important;
         border-radius: 14px !important;
         border: none !important;
         box-shadow: 0 3px 10px rgba(230, 197, 102, 0.25) !important;
@@ -152,7 +142,7 @@ st.markdown(f"""
         font-family: 'Quicksand', sans-serif !important;
         font-weight: 700 !important;
         font-size: 13px !important;
-        padding: 8px 18px !important;
+        padding: 8px 16px !important;
         border-radius: 14px !important;
         border: none !important;
         text-decoration: none !important;
@@ -161,23 +151,24 @@ st.markdown(f"""
         width: 100% !important;
     }}
 
+    /* NAVEGACIÓN SUPERIOR POR BLOQUES LIMPIOS */
     .stTabs [data-baseweb="tab-list"] {{ 
-        gap: 4px; 
+        gap: 6px; 
         overflow-x: auto;
     }}
     .stTabs [data-baseweb="tab"] {{
-        border-radius: 10px 10px 0px 0px !important;
-        padding: 8px 12px !important;
-        background-color: rgba(18, 16, 26, 0.9) !important;
+        border-radius: 12px 12px 0px 0px !important;
+        padding: 10px 16px !important;
+        background-color: rgba(18, 16, 26, 0.95) !important;
         color: #bfa8db !important;
         font-family: 'Quicksand', sans-serif !important;
-        font-size: 12px !important;
-        font-weight: 600 !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
     }}
     .stTabs [aria-selected="true"] {{
-        background-color: rgba(35, 30, 50, 0.95) !important;
+        background-color: rgba(38, 32, 54, 0.95) !important;
         color: #e6c566 !important;
-        font-weight: 700 !important;
+        border-bottom: 3px solid #e6c566 !important;
     }}
 
     .fc {{
@@ -188,7 +179,7 @@ st.markdown(f"""
         padding: 6px;
     }}
     .fc-timegrid-slot {{
-        height: 42px !important;
+        height: 40px !important;
     }}
     .fc-timegrid-slot-label-frame {{
         text-align: center !important;
@@ -363,13 +354,13 @@ def init_db():
 
 init_db()
 
-# HEADER
+# HEADER Y BOTÓN FLOTANTE
 col_h1, col_h2 = st.columns([7, 3])
 with col_h1:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 10px;">
             <div>
-                <div class="brand-title" style="font-size: 38px; line-height:0.9;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 36px; line-height:0.9;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
@@ -379,20 +370,13 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# NAVEGACIÓN CON ASISTENTE BOT
-opcion = st.tabs([
-    "📅 Agenda", 
-    "💳 Caja & Cobros", 
-    "📈 Estadísticas Top",
-    "📣 Marketing & Promo", 
-    "👤 Clientes", 
-    "💆‍♀️ Servicios",
-    "📦 Stock", 
-    "🏛️ Fiscal & Trimestral", 
-    "📉 Gastos", 
-    "⏳ Lista Espera",
-    "✍️ Firma & RGPD",
-    "🤖 Bot Asistente"
+# NAVEGACIÓN PRINCIPAL REDISEÑADA EN 5 GRANDES BLOQUES
+opcion_bloque = st.tabs([
+    "📅 Agenda & Citas", 
+    "💶 Caja & Finanzas", 
+    "👤 Gestión Centro", 
+    "📣 Marketing & Regalos", 
+    "📊 Analítica & Legal"
 ])
 
 def generar_link_whatsapp(telefono, texto_mensaje):
@@ -401,52 +385,53 @@ def generar_link_whatsapp(telefono, texto_mensaje):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
 
-# GENERADOR DE TARJETA REGALO CON FUENTE BALQIS Y LOGO AL 100% DE FONDO
+# GENERADOR DE TARJETA REGALO CON PROPORCIÓN DE LOGO PERFECTA Y TIPOGRAFÍA CLARA
 def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, importe):
-    ancho, alto = 1200, 700
-    base_img = Image.new("RGBA", (ancho, alto), (12, 10, 16, 255))
+    ancho, alto = 1200, 680
+    base_img = Image.new("RGBA", (ancho, alto), (14, 12, 18, 255))
 
-    # Cargar logo cubriendo TODO el lienzo (100%)
+    # Cargar logo manteniendo su proporción original en el fondo del recuadro
     if ruta_logo_file and os.path.exists(ruta_logo_file):
         try:
             logo_img = Image.open(ruta_logo_file).convert("RGBA")
-            # Escalar logo para llenar la tarjeta completamente
-            logo_img = logo_img.resize((ancho, alto), Image.Resampling.LANCZOS)
-            base_img.paste(logo_img, (0, 0), logo_img)
+            logo_img.thumbnail((ancho - 160, alto - 160), Image.Resampling.LANCZOS)
+            pos_x = (ancho - logo_img.width) // 2
+            pos_y = (alto - logo_img.height) // 2
+            
+            # Opacidad del logo al 25% para no entorpecer la lectura
+            alpha = logo_img.split()[3]
+            alpha = alpha.point(lambda p: int(p * 0.25))
+            logo_img.putalpha(alpha)
+            base_img.paste(logo_img, (pos_x, pos_y), logo_img)
         except Exception:
             pass
 
-    # Capa de contraste oscuro translúcido para legibilidad perfecta
     overlay = Image.new("RGBA", (ancho, alto), (0, 0, 0, 0))
     draw_overlay = ImageDraw.Draw(overlay)
 
-    # Marco exterior dorado elegante
-    draw_overlay.rectangle([25, 25, ancho-25, alto-25], outline="#e6c566", width=6)
+    # Marco dorado elegante
+    draw_overlay.rectangle([25, 25, ancho-25, alto-25], outline="#e6c566", width=5)
     draw_overlay.rectangle([35, 35, ancho-35, alto-35], outline="#ba9530", width=2)
-
-    # Contenedor central semi-transparente
-    draw_overlay.rectangle([70, 70, ancho-70, alto-70], fill=(12, 10, 18, 210), outline="#e6c566", width=2)
+    draw_overlay.rectangle([65, 65, ancho-65, alto-65], fill=(14, 12, 20, 215), outline="#e6c566", width=2)
 
     final_img = Image.alpha_composite(base_img, overlay)
     draw = ImageDraw.Draw(final_img)
 
-    # Cargar fuente TTF de Great Vibes si está disponible
-    f_titulo = ImageFont.truetype(FONT_PATH, 70) if (FONT_PATH and os.path.exists(FONT_PATH)) else ImageFont.load_default()
-    f_sub = ImageFont.truetype(FONT_PATH, 35) if (FONT_PATH and os.path.exists(FONT_PATH)) else ImageFont.load_default()
+    # Tipografía moderna de alta legibilidad
+    f_tit = ImageFont.load_default()
+    f_txt = ImageFont.load_default()
 
-    # Textos principales sin caracteres extraños
-    draw.text((ancho//2, 130), "Judit Domingo", fill="#e6c566", anchor="mm", font=f_titulo)
-    draw.text((ancho//2, 200), "CENTRE D'ESTETICA - TARJETA REGALO", fill="#d4af37", anchor="mm", font=f_sub)
+    draw.text((ancho//2, 120), "Judit Domingo", fill="#e6c566", anchor="mm", font=f_tit)
+    draw.text((ancho//2, 180), "CENTRE D'ESTETICA - TARJETA REGALO", fill="#d4af37", anchor="mm", font=f_txt)
 
-    draw.text((110, 280), f"Para: {beneficiario}", fill="#ffffff", font=f_sub)
-    draw.text((110, 350), f"De: {comprador}", fill="#dcd6f7", font=f_sub)
-    draw.text((110, 420), f"Tratamiento: {concepto}", fill="#e6c566", font=f_sub)
+    draw.text((110, 260), f"Para: {beneficiario}", fill="#ffffff", font=f_txt)
+    draw.text((110, 320), f"De: {comprador}", fill="#dcd6f7", font=f_txt)
+    draw.text((110, 380), f"Tratamiento: {concepto}", fill="#e6c566", font=f_txt)
 
-    # Caja del importe
-    draw.rectangle([ancho-380, alto-200, ancho-100, alto-90], fill=(28, 22, 40, 240), outline="#e6c566", width=3)
-    draw.text((ancho-240, alto-145), f"{importe:.2f} EUR", fill="#e6c566", anchor="mm", font=f_sub)
+    draw.rectangle([ancho-380, alto-190, ancho-100, alto-90], fill=(28, 22, 40, 240), outline="#e6c566", width=3)
+    draw.text((ancho-240, alto-140), f"{importe:.2f} EUR", fill="#e6c566", anchor="mm", font=f_txt)
 
-    draw.text((110, alto-130), f"Codigo: {codigo}", fill="#a29bfe", font=f_sub)
+    draw.text((110, alto-120), f"Codigo: {codigo}", fill="#a29bfe", font=f_txt)
 
     buf = io.BytesIO()
     final_img.convert("RGB").save(buf, format="PNG")
@@ -633,13 +618,9 @@ def modal_editar_tarjeta_regalo(tr_id):
             st.success("Tarjeta eliminada.")
             st.rerun()
 
-# 1. AGENDA
-with opcion[0]:
-    col_ag1, col_ag2 = st.columns([7, 3])
-    with col_ag1: st.subheader("Agenda de Citas")
-    with col_ag2:
-        modo_vista = st.radio("Pantalla:", ["📱 Móvil", "💻 Ordenador / Completa"], horizontal=True)
-
+# 1. BLOQUE: AGENDA
+with opcion_bloque[0]:
+    st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''SELECT c.id, c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.color, s.precio, c.estado_cobro
@@ -660,8 +641,6 @@ with opcion[0]:
             "borderColor": color
         })
 
-    alto_cal = 650 if modo_vista == "📱 Móvil" else 900
-
     cal_options = {
         "locale": "es",
         "initialView": "timeGridWeek",
@@ -681,7 +660,7 @@ with opcion[0]:
             "month": "numeric",
             "omitCommas": True
         },
-        "height": alto_cal,
+        "height": 720,
         "selectable": True,
         "headerToolbar": {
             "left": "prev,next",
@@ -695,7 +674,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key=f"koibox_cal_{modo_vista}")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v20")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -706,116 +685,113 @@ with opcion[0]:
     if state.get("dateClick"):
         click_str = state["dateClick"]["date"]
         modal_crear_cita(click_str)
-        # 2. CAJA & COBROS
-with opcion[1]:
-    st.subheader("Arqueo de Caja del Día")
-    hoy_str = datetime.date.today().strftime("%Y-%m-%d")
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja FROM cajas WHERE fecha = ?", (hoy_str,))
-    caja_hoy = cursor.fetchone() or (0.0, 0.0, 0.0, 0.0, 0.0)
-    conn.close()
+        # 2. BLOQUE: CAJA & FINANZAS
+with opcion_bloque[1]:
+    tab_f1, tab_f2 = st.tabs(["💳 Caja del Día", "🏛️ Fiscal & Gastos"])
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1: st.metric("💵 Efectivo", f"{caja_hoy[0]:.2f} €")
-    with col2: st.metric("💳 Tarjeta", f"{caja_hoy[1]:.2f} €")
-    with col3: st.metric("📲 Bizum", f"{caja_hoy[2]:.2f} €")
-    with col4: st.metric("🏆 Total Hoy", f"{caja_hoy[3]:.2f} €")
+    with tab_f1:
+        st.subheader("Arqueo de Caja del Día")
+        hoy_str = datetime.date.today().strftime("%Y-%m-%d")
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("SELECT abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja FROM cajas WHERE fecha = ?", (hoy_str,))
+        caja_hoy = cursor.fetchone() or (0.0, 0.0, 0.0, 0.0, 0.0)
+        conn.close()
 
-    st.markdown("### 📋 Citas Agendadas Hoy")
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("""SELECT c.id, c.fecha_inicio, cl.nombre, cl.primer_apellido, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado
-                      FROM citas c JOIN clientes cl ON c.cliente_id = cl.id JOIN servicios s ON c.servicio_id = s.id
-                      WHERE DATE(c.fecha_inicio) = ? ORDER BY c.fecha_inicio ASC""", (hoy_str,))
-    citas_hoy = cursor.fetchall()
-    conn.close()
+        col1, col2, col3, col4 = st.columns(4)
+        with col1: st.metric("💵 Efectivo", f"{caja_hoy[0]:.2f} €")
+        with col2: st.metric("💳 Tarjeta", f"{caja_hoy[1]:.2f} €")
+        with col3: st.metric("📲 Bizum", f"{caja_hoy[2]:.2f} €")
+        with col4: st.metric("🏆 Total Hoy", f"{caja_hoy[3]:.2f} €")
 
-    for cita_h in citas_hoy:
-        c_id, f_i, c_nom, c_p_ap, s_nom, s_precio, est_cobro, met_pago, monto_cob = cita_h
-        hora_cita = datetime.datetime.fromisoformat(f_i).strftime("%H:%M")
-        nom_cliente = f"{c_nom} {c_p_ap or ''}".strip()
+        st.markdown("### 📋 Citas Agendadas Hoy")
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("""SELECT c.id, c.fecha_inicio, cl.nombre, cl.primer_apellido, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado
+                          FROM citas c JOIN clientes cl ON c.cliente_id = cl.id JOIN servicios s ON c.servicio_id = s.id
+                          WHERE DATE(c.fecha_inicio) = ? ORDER BY c.fecha_inicio ASC""", (hoy_str,))
+        citas_hoy = cursor.fetchall()
+        conn.close()
 
-        col_a, col_b, col_c = st.columns([4, 3, 2])
-        with col_a: st.markdown(f"**⏰ {hora_cita}h** — {nom_cliente} (*{s_nom}*)")
-        with col_b:
-            if est_cobro == "Cobrado": st.success(f"✅ Cobrado: {monto_cob:.2f}€ ({met_pago})")
-            else: st.warning(f"⏳ Pendiente: {s_precio:.2f}€")
-        with col_c:
-            if est_cobro != "Cobrado":
-                if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
-                    modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
+        for cita_h in citas_hoy:
+            c_id, f_i, c_nom, c_p_ap, s_nom, s_precio, est_cobro, met_pago, monto_cob = cita_h
+            hora_cita = datetime.datetime.fromisoformat(f_i).strftime("%H:%M")
+            nom_cliente = f"{c_nom} {c_p_ap or ''}".strip()
 
-# 3. ESTADÍSTICAS ORGANIZADAS
-with opcion[2]:
-    st.subheader("📈 Centro de Analítica & Estadísticas")
-    
-    tab_est1, tab_est2, tab_est3, tab_est4 = st.tabs([
-        "💵 Finanzas & Rendimiento", 
-        "💆‍♀️ Servicios & Ventas", 
-        "👑 Ranking Clientas", 
-        "⏰ Ocupación & Horarios"
-    ])
+            col_a, col_b, col_c = st.columns([4, 3, 2])
+            with col_a: st.markdown(f"**⏰ {hora_cita}h** — {nom_cliente} (*{s_nom}*)")
+            with col_b:
+                if est_cobro == "Cobrado": st.success(f"✅ Cobrado: {monto_cob:.2f}€ ({met_pago})")
+                else: st.warning(f"⏳ Pendiente: {s_precio:.2f}€")
+            with col_c:
+                if est_cobro != "Cobrado":
+                    if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
+                        modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
 
-    conn = sqlite3.connect(DB_NAME)
-    df_citas_cob = pd.read_sql_query("""SELECT c.fecha_inicio, c.monto_cobrado, c.metodo_pago, s.nombre as servicio, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as cliente
-                                        FROM citas c 
-                                        JOIN servicios s ON c.servicio_id = s.id
-                                        JOIN clientes cl ON c.cliente_id = cl.id
-                                        WHERE c.estado_cobro='Cobrado'""", conn)
-    conn.close()
+    with tab_f2:
+        st.subheader("🏛️ Control Fiscal & Trimestral")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1: anio_f = st.selectbox("Año Fiscal", [2026, 2025])
+        with col_f2: trim_f = st.selectbox("Trimestre", ["1T (Ene - Mar)", "2T (Abr - Jun)", "3T (Jul - Sep)", "4T (Oct - Dic)"])
 
-    if df_citas_cob.empty:
-        st.info("Aún no hay citas cobradas para mostrar las analíticas.")
-    else:
-        with tab_est1:
-            tot_fact = df_citas_cob["monto_cobrado"].sum()
-            num_serv = len(df_citas_cob)
-            ticket_med = tot_fact / num_serv if num_serv > 0 else 0.0
+        conn = sqlite3.connect(DB_NAME)
+        df_f_ing = pd.read_sql_query("SELECT total FROM facturas", conn)
+        df_f_gas = pd.read_sql_query("SELECT base_imponible, total FROM gastos", conn)
+        conn.close()
 
-            c_f1, c_f2 = st.columns(2)
-            with c_f1: st.metric("💶 Facturación Total", f"{tot_fact:.2f} €")
-            with c_f2: st.metric("🎟️ Ticket Medio / Cita", f"{ticket_med:.2f} €")
+        total_ventas = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
+        iva_repercutido = total_ventas * 0.21
+        total_gastos_base = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
+        total_gastos_iva = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
 
-            st.markdown("#### 💳 Distribución por Método de Pago")
-            st.bar_chart(df_citas_cob["metodo_pago"].value_counts())
+        iva_a_pagar = iva_repercutido - total_gastos_iva
+        rendimiento_neto = total_ventas - (total_gastos_base + total_gastos_iva)
 
-        with tab_est2:
-            st.markdown("#### 💆‍♀️ Tratamientos Más Demandados")
-            st.bar_chart(df_citas_cob["servicio"].value_counts())
+        c_m1, c_m2, c_m3 = st.columns(3)
+        with c_m1: st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar</h4><h2 style='color:#e6c566;'>{iva_a_pagar:.2f} €</h2></div>", unsafe_allow_html=True)
+        with c_m2: st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado</h4><h2 style='color:#74b9ff;'>{max(0.0, rendimiento_neto*0.2):.2f} €</h2></div>", unsafe_allow_html=True)
+        with c_m3: st.markdown(f"<div class='card-metric'><h4>💵 Neto Real</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2></div>", unsafe_allow_html=True)
 
-            st.markdown("#### 📊 Facturación Total por Tratamiento")
-            df_serv_fact = df_citas_cob.groupby("servicio")["monto_cobrado"].sum().reset_index().sort_values(by="monto_cobrado", ascending=False)
-            df_serv_fact.columns = ["Tratamiento", "Total Ingresado (€)"]
-            st.dataframe(df_serv_fact, use_container_width=True)
+# 3. BLOQUE: GESTIÓN DE CENTRO
+with opcion_bloque[2]:
+    tab_g1, tab_g2, tab_g3 = st.tabs(["👤 Clientes", "💆‍♀️ Tratamientos", "📦 Stock"])
 
-        with tab_est3:
-            st.markdown("#### 👑 Top Clientas por Volumen de Gasto")
-            df_top_cli = df_citas_cob.groupby("cliente")["monto_cobrado"].sum().reset_index().sort_values(by="monto_cobrado", ascending=False).head(10)
-            df_top_cli.columns = ["Clienta", "Gasto Acumulado (€)"]
-            st.dataframe(df_top_cli, use_container_width=True)
+    with tab_g1:
+        st.subheader("👤 Fichero de Clientes")
+        conn = sqlite3.connect(DB_NAME)
+        df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', PRINTF('%.2f €', monedero) as 'Saldo Monedero' FROM clientes ORDER BY id DESC", conn)
+        conn.close()
+        st.dataframe(df_cli, use_container_width=True)
 
-        with tab_est4:
-            st.markdown("#### ⏰ Franjas Horarias con Más Afluencia")
-            df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
-            st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
+    with tab_g2:
+        st.subheader("💆‍♀️ Catálogo de Tratamientos")
+        conn = sqlite3.connect(DB_NAME)
+        df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
+        conn.close()
+        st.dataframe(df_serv, use_container_width=True)
 
-# 4. MARKETING
-with opcion[3]:
-    st.subheader("📣 Módulo de Marketing y Fidelización")
-    tab_m1, tab_m2, tab_m3 = st.tabs(["🎁 Emisión de Tarjeta Regalo", "🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp"])
+    with tab_g3:
+        st.subheader("📦 Control de Stock")
+        conn = sqlite3.connect(DB_NAME)
+        df_st = pd.read_sql_query("SELECT nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
+        conn.close()
+        st.dataframe(df_st, use_container_width=True)
+
+# 4. BLOQUE: MARKETING & REGALOS
+with opcion_bloque[3]:
+    tab_m1, tab_m2, tab_m3 = st.tabs(["🎁 Tarjetas Regalo", "🎂 Cumpleaños", "💬 WhatsApp Promo"])
 
     with tab_m1:
         st.markdown("### 🎁 Crear Nueva Tarjeta Regalo")
         col_tr1, col_tr2 = st.columns(2)
         with col_tr1:
-            tr_comprador = st.text_input("Comprador/a (Persona que regala) *")
-            tr_beneficiario = st.text_input("Beneficiario/a (Persona que recibe) *")
-            tr_concepto = st.text_input("Concepto / Tratamiento Incluido *", value="Tratamiento Facial VIP / Maderoterapia")
+            tr_comprador = st.text_input("Comprador/a *")
+            tr_beneficiario = st.text_input("Beneficiario/a *")
+            tr_concepto = st.text_input("Concepto / Tratamiento *", value="Tratamiento Facial VIP / Maderoterapia")
         with col_tr2:
             tr_importe = st.number_input("Importe (€) *", value=50.0, step=5.0)
             tr_caducidad = st.date_input("Fecha Caducidad", value=datetime.date.today() + datetime.timedelta(days=90))
-            tr_tel_envio = st.text_input("Móvil Beneficiaria (Para envío por WhatsApp)")
+            tr_tel_envio = st.text_input("Móvil Beneficiaria")
 
         if st.button("🎁 Emitir y Guardar Tarjeta Regalo", use_container_width=True, type="primary"):
             if tr_comprador and tr_beneficiario and tr_concepto:
@@ -827,19 +803,18 @@ with opcion[3]:
                                (cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe, tr_importe, datetime.date.today().strftime("%Y-%m-%d"), tr_caducidad.strftime("%Y-%m-%d")))
                 conn.commit()
                 conn.close()
-                st.success(f"¡Tarjeta Regalo {cod_tr} Emitida Correctamente!")
+                st.success(f"¡Tarjeta Regalo {cod_tr} Emitida!")
 
                 img_bytes = generar_tarjeta_regalo_img(cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe)
-                st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Lujosa", use_container_width=True)
+                st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Pro", use_container_width=True)
 
                 col_d1, col_d2 = st.columns(2)
                 with col_d1:
-                    st.download_button("📥 Descargar Tarjeta PNG (Para Imprimir)", data=img_bytes, file_name=f"Tarjeta_Regalo_{cod_tr}.png", mime="image/png", use_container_width=True)
+                    st.download_button("📥 Descargar Tarjeta PNG", data=img_bytes, file_name=f"Tarjeta_{cod_tr}.png", mime="image/png", use_container_width=True)
                 with col_d2:
                     if tr_tel_envio:
                         msg_tr = f"¡Hola {tr_beneficiario}! 🎁 Te han regalado una Tarjeta Regalo en *Judit Domingo Centre d'Estètica* por valor de *{tr_importe:.2f}€* (*{tr_concepto}*). ¡Llámanos para agendar tu cita!"
-                        url_tr_wa = generar_link_whatsapp(tr_tel_envio, msg_tr)
-                        st.link_button("📲 Notificar por WhatsApp", url_tr_wa, use_container_width=True)
+                        st.link_button("📲 Notificar por WhatsApp", generar_link_whatsapp(tr_tel_envio, msg_tr), use_container_width=True)
 
         st.markdown("---")
         st.markdown("### 📋 Tarjetas Regalo Emitidas")
@@ -849,23 +824,18 @@ with opcion[3]:
         tr_rows = cursor.fetchall()
         conn.close()
 
-        if not tr_rows:
-            st.info("No hay tarjetas regalo emitidas aún.")
-        else:
+        if tr_rows:
             for tr_item in tr_rows:
                 tr_id, t_cod, t_comp, t_ben, t_conc, t_saldo, t_cad = tr_item
                 col_t1, col_t2, col_t3 = st.columns([5, 3, 2])
-                with col_t1:
-                    st.markdown(f"🎁 **{t_cod}** — *{t_ben}* (De: {t_comp})")
-                    st.caption(f"Tratamiento: {t_conc} | Caduca: {t_cad}")
-                with col_t2:
-                    st.markdown(f"💰 **Saldo:** {t_saldo:.2f} €")
+                with col_t1: st.markdown(f"🎁 **{t_cod}** — *{t_ben}* (De: {t_comp})")
+                with col_t2: st.markdown(f"💰 **Saldo:** {t_saldo:.2f} €")
                 with col_t3:
-                    if st.button("✏️ Gestor / Borrar", key=f"btn_edit_tr_{tr_id}"):
+                    if st.button("✏️ Gestor / Borrar", key=f"btn_tr_{tr_id}"):
                         modal_editar_tarjeta_regalo(tr_id)
 
     with tab_m2:
-        st.markdown("### 🎂 Próximos Cumpleaños")
+        st.markdown("### 🎂 Cumpleaños del Mes")
         mes_actual = datetime.date.today().strftime("%m")
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -873,163 +843,91 @@ with opcion[3]:
         cump_rows = cursor.fetchall()
         conn.close()
 
-        if not cump_rows:
-            st.info("No hay cumpleaños registrados para este mes.")
-        else:
-            for nom_c, tel_c, fnac_c in cump_rows:
-                col1, col2 = st.columns([3, 1])
-                with col1: st.markdown(f"🎉 **{nom_c}** ({fnac_c})")
-                with col2:
-                    if tel_c:
-                        msg_cump = f"¡Feliz Cumpleaños {nom_c}! 🥳✨ Desde Judit Domingo Centre d'Estètica te deseamos un gran día. ¡Tienes un 10% de descuento en tu próximo tratamiento como regalo!"
-                        url_cump = generar_link_whatsapp(tel_c, msg_cump)
-                        st.link_button("📲 Felicitar", url_cump, use_container_width=True)
+        for nom_c, tel_c, fnac_c in cump_rows:
+            col1, col2 = st.columns([3, 1])
+            with col1: st.markdown(f"🎉 **{nom_c}** ({fnac_c})")
+            with col2:
+                if tel_c:
+                    msg_cump = f"¡Feliz Cumpleaños {nom_c}! 🥳✨ Tienes un 10% de descuento en tu próximo tratamiento en Judit Domingo Centre d'Estètica!"
+                    st.link_button("📲 Felicitar", generar_link_whatsapp(tel_c, msg_cump), use_container_width=True)
 
     with tab_m3:
         st.markdown("### 💬 Difusión y Promociones")
-        plantilla = st.selectbox("Selecciona Tipo de Campaña", [
-            "Lanzamiento de Tratamiento (Maderoterapia/Facial)",
-            "Promoción Especial de Temporada",
-            "Solicitud de Reseña en Google (5 Estrellas)"
-        ])
+        txt_p = "Hola! ✨ Novedad en Judit Domingo Centre d'Estètica. Hemos abierto agenda para el nuevo tratamiento facial/corporal. ¡Reserva tu plaza!"
+        st.text_area("Texto Promocional", value=txt_p, height=100)
 
-        if plantilla == "Lanzamiento de Tratamiento (Maderoterapia/Facial)":
-            txt_promo = "Hola! ✨ Novedad en Judit Domingo Centre d'Estètica. Hemos abierto agenda para el nuevo tratamiento facial/corporal. ¡Reserva tu plaza esta semana y llévate un diagnóstico gratuito! 💆‍♀️"
-        elif plantilla == "Promoción Especial de Temporada":
-            txt_promo = "Hola! 🌸 Prepara tu piel esta temporada. Disfruta de un pack especial este mes. ¡Plazas limitadas! Mándanos un mensaje para agendar tu cita."
-        else:
-            txt_promo = "Hola! ✨ Muchas gracias por confiar en Judit Domingo Centre d'Estètica. Nos encantaría saber tu opinión: ¿nos dejas 5 estrellas en Google? Nos ayuda muchísimo: https://g.page/r/juditestetica"
+# 5. BLOQUE: ANALÍTICA & LEGAL
+with opcion_bloque[4]:
+    tab_a1, tab_a2, tab_a3 = st.tabs(["📈 Estadísticas Top", "✍️ RGPD & Firmas", "⏳ Lista Espera"])
 
-        st.text_area("Texto de la Promoción (Copia y envía por WhatsApp)", value=txt_promo, height=100)
+    with tab_a1:
+        st.subheader("📈 Centro de Analítica")
+        conn = sqlite3.connect(DB_NAME)
+        df_citas_cob = pd.read_sql_query("""SELECT c.monto_cobrado, c.metodo_pago, s.nombre as servicio
+                                            FROM citas c JOIN servicios s ON c.servicio_id = s.id WHERE c.estado_cobro='Cobrado'""", conn)
+        conn.close()
 
-# 5. CLIENTES
-with opcion[4]:
-    st.subheader("👤 Fichero de Clientes")
-    conn = sqlite3.connect(DB_NAME)
-    df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', PRINTF('%.2f €', monedero) as 'Saldo Monedero' FROM clientes ORDER BY id DESC", conn)
-    conn.close()
-    st.dataframe(df_cli, use_container_width=True)
+        if not df_citas_cob.empty:
+            c1, c2 = st.columns(2)
+            with c1: st.metric("💶 Facturación Acumulada", f"{df_citas_cob['monto_cobrado'].sum():.2f} €")
+            with c2: st.metric("🎟️ Ticket Medio", f"{df_citas_cob['monto_cobrado'].mean():.2f} €")
+            st.bar_chart(df_citas_cob["servicio"].value_counts())
 
-# 6. SERVICIOS
-with opcion[5]:
-    st.subheader("💆‍♀️ Catálogo de Tratamientos")
-    conn = sqlite3.connect(DB_NAME)
-    df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
-    conn.close()
-    st.dataframe(df_serv, use_container_width=True)
+    with tab_a2:
+        st.subheader("✍️ Firma Digital RGPD")
+        conn = sqlite3.connect(DB_NAME)
+        df_cli_sel = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
+        conn.close()
 
-# 7. STOCK
-with opcion[6]:
-    st.subheader("📦 Control de Stock")
-    conn = sqlite3.connect(DB_NAME)
-    df_st = pd.read_sql_query("SELECT nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
-    conn.close()
-    st.dataframe(df_st, use_container_width=True)
+        if not df_cli_sel.empty:
+            c_sel = st.selectbox("Clienta *", options=df_cli_sel["id"], format_func=lambda x: df_cli_sel[df_cli_sel["id"]==x]["nom"].values[0])
+            tipo_t = st.selectbox("Tratamiento", ["Maderoterapia Corporal", "Higiene Facial Profunda", "Lifting Pestañas", "Microblading"])
+            nombre_f = st.text_input("Nombre Completo (Firma Digital) *")
 
-# 8. FISCAL & TRIMESTRAL
-with opcion[7]:
-    st.subheader("🏛️ Panel Control Fiscal & Trimestral")
-    col_f1, col_f2 = st.columns(2)
-    with col_f1: anio_f = st.selectbox("Año Fiscal", [2026, 2025])
-    with col_f2: trim_f = st.selectbox("Trimestre a Calcular", ["1T (Ene - Mar)", "2T (Abr - Jun)", "3T (Jul - Sep)", "4T (Oct - Dic)"])
+            if st.button("✍️ Guardar Firma", use_container_width=True):
+                if nombre_f:
+                    conn = sqlite3.connect(DB_NAME)
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO consentimientos (cliente_id, tipo_tratamiento, fecha_firma, acepta_rgpd, firma_texto) VALUES (?,?,?,?,?)",
+                                   (c_sel, tipo_t, datetime.date.today().strftime("%Y-%m-%d"), 1, nombre_f))
+                    conn.commit()
+                    conn.close()
+                    st.success("¡Consentimiento guardado!")
 
-    conn = sqlite3.connect(DB_NAME)
-    df_f_ing = pd.read_sql_query("SELECT total, metodo_pago FROM facturas", conn)
-    df_f_gas = pd.read_sql_query("SELECT base_imponible, iva_porcentaje, total FROM gastos", conn)
-    conn.close()
+    with tab_a3:
+        st.subheader("⏳ Lista de Espera")
+        conn = sqlite3.connect(DB_NAME)
+        df_le = pd.read_sql_query("""SELECT le.id, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as 'Clienta', cl.telefono as 'Móvil', s.nombre as 'Tratamiento'
+                                     FROM lista_espera le JOIN clientes cl ON le.cliente_id = cl.id JOIN servicios s ON le.servicio_id = s.id WHERE le.estado='Pendiente'""", conn)
+        conn.close()
+        st.dataframe(df_le, use_container_width=True)
 
-    total_ventas = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
-    iva_repercutido = total_ventas * 0.21
+# BOT FLOTANTE IA EN LA ESQUINA INFERIOR DERECHA
+with st.popover("🤖 Bot Asistente", help="Consulta dudas sobre tratamientos o la app"):
+    st.markdown("### 🤖 Asistente del Centro")
+    st.caption("Pregunta lo que necesites sobre citas, caja o información de tratamientos.")
 
-    total_gastos_base = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
-    total_gastos_iva = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
-
-    iva_a_pagar = iva_repercutido - total_gastos_iva
-    rendimiento_neto = total_ventas - (total_gastos_base + total_gastos_iva)
-    irpf_estimado = max(0.0, rendimiento_neto * 0.20)
-
-    st.markdown("---")
-    c_m1, c_m2, c_m3 = st.columns(3)
-    with c_m1:
-        st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{iva_a_pagar:.2f} €</h2></div>", unsafe_allow_html=True)
-    with c_m2:
-        st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_estimado:.2f} €</h2></div>", unsafe_allow_html=True)
-    with c_m3:
-        st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2></div>", unsafe_allow_html=True)
-
-# 9. GASTOS
-with opcion[8]:
-    st.subheader("📉 Gastos del Local")
-    conn = sqlite3.connect(DB_NAME)
-    df_g = pd.read_sql_query("SELECT fecha as 'Fecha', proveedor as 'Proveedor', concepto as 'Concepto', total as 'Total (€)' FROM gastos ORDER BY fecha DESC", conn)
-    conn.close()
-    st.dataframe(df_g, use_container_width=True)
-
-# 10. LISTA DE ESPERA
-with opcion[9]:
-    st.subheader("⏳ Lista de Espera")
-    conn = sqlite3.connect(DB_NAME)
-    df_le_view = pd.read_sql_query("""SELECT le.id, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as 'Clienta', cl.telefono as 'Móvil', s.nombre as 'Tratamiento', le.preferencia_horario as 'Preferencia'
-                                      FROM lista_espera le JOIN clientes cl ON le.cliente_id = cl.id JOIN servicios s ON le.servicio_id = s.id WHERE le.estado='Pendiente'""", conn)
-    conn.close()
-    st.dataframe(df_le_view, use_container_width=True)
-
-# 11. FIRMA & RGPD
-with opcion[10]:
-    st.subheader("✍️ Firma Digital de Consentimientos & RGPD")
-    conn = sqlite3.connect(DB_NAME)
-    df_cli_select = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
-    conn.close()
-
-    if not df_cli_select.empty:
-        c_sel = st.selectbox("Seleccionar Clienta *", options=df_cli_select["id"], format_func=lambda x: df_cli_select[df_cli_select["id"]==x]["nom"].values[0])
-        tipo_trat = st.selectbox("Tratamiento a Realizar", ["Maderoterapia Corporal", "Higiene Facial Profunda / Peeling", "Lifting / Extensión de Pestañas", "Microblading / Micropigmentación", "Tratamiento General Estética"])
-        
-        nombre_firma = st.text_input("Escribe tu Nombre Completo como Firma Digital *")
-        chk_rgpd = st.checkbox("Acepto la Política de Protección de Datos (RGPD).", value=True)
-
-        if st.button("✍️ Guardar Firma de Consentimiento", use_container_width=True):
-            if nombre_firma:
-                conn = sqlite3.connect(DB_NAME)
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO consentimientos (cliente_id, tipo_tratamiento, fecha_firma, acepta_rgpd, firma_texto) VALUES (?,?,?,?,?)",
-                               (c_sel, tipo_trat, datetime.date.today().strftime("%Y-%m-%d"), 1 if chk_rgpd else 0, nombre_firma))
-                conn.commit()
-                conn.close()
-                st.success("¡Consentimiento firmado y guardado!")
-                st.rerun()
-
-# 12. BOT ASISTENTE IA EN LA APP
-with opcion[11]:
-    st.subheader("🤖 Asistente Inteligente del Centro")
-    st.info("Pregunta cualquier duda sobre tratamientos, la gestión de la agenda o solicita ayuda para redactar mensajes.")
-
-    if "bot_chat_history" not in st.session_state:
-        st.session_state["bot_chat_history"] = [
-            {"role": "assistant", "content": "¡Hola Judit y Adri! 💆‍♀️ Soy el asistente virtual del centro. ¿En qué os puedo ayudar hoy?"}
+    if "bot_chat" not in st.session_state:
+        st.session_state["bot_chat"] = [
+            {"role": "assistant", "content": "¡Hola Judit y Adri! 💆‍♀️ ¿En qué puedo ayudaros hoy?"}
         ]
 
-    for msg in st.session_state["bot_chat_history"]:
-        if msg["role"] == "user":
-            st.chat_message("user").write(msg["content"])
-        else:
-            st.chat_message("assistant").write(msg["content"])
+    for msg in st.session_state["bot_chat"]:
+        st.chat_message(msg["role"]).write(msg["content"])
 
-    if user_prompt := st.chat_input("Escribe tu consulta aquí..."):
-        st.session_state["bot_chat_history"].append({"role": "user", "content": user_prompt})
+    if user_prompt := st.chat_input("Escribe tu duda aquí..."):
+        st.session_state["bot_chat"].append({"role": "user", "content": user_prompt})
         st.chat_message("user").write(user_prompt)
 
-        # Respuesta inteligente contextual para el centro
-        prompt_lower = user_prompt.lower()
-        if "maderoterapia" in prompt_lower:
-            respuesta = "La Maderoterapia corporal es ideal para remodelar, drenar líquidos y reducir celulitis. Se recomiendan sesiones de 45 a 60 minutos con una frecuencia de 1 o 2 veces por semana."
-        elif "caja" in prompt_lower or "cobrar" in prompt_lower:
-            respuesta = "Para realizar un cobro, ve a la pestaña '💳 Caja & Cobros' o pulsa en la cita correspondiente dentro de la agenda y selecciona 'Cobrar Servicio'."
-        elif "cumpleaños" in prompt_lower or "whatsapp" in prompt_lower:
-            respuesta = "Puedes consultar los cumpleaños del mes actual en la pestaña '📣 Marketing & Promo' y enviarles una felicitación con descuento directamente por WhatsApp."
+        p_low = user_prompt.lower()
+        if "maderoterapia" in p_low:
+            resp = "La Maderoterapia ayuda a drenar líquidos y reafirmar. Se recomiendan sesiones de 45-60 min."
+        elif "caja" in p_low or "cobrar" in p_low:
+            resp = "Para cobrar, ve a '💶 Caja & Finanzas' o pulsa en la cita del calendario y selecciona 'Cobrar'."
+        elif "tarjeta" in p_low:
+            resp = "Puedes emitir o editar tarjetas regalo en '📣 Marketing & Regalos' > '🎁 Tarjetas Regalo'."
         else:
-            respuesta = "Entendido. He registrado tu consulta sobre el centro. ¿Necesitas ayuda adicional con alguna cita o tratamiento?"
+            resp = "¡Entendido! Consulta registrada. ¿Necesitas ayuda con algo más?"
 
-        st.session_state["bot_chat_history"].append({"role": "assistant", "content": respuesta})
-        st.chat_message("assistant").write(respuesta)
-        
+        st.session_state["bot_chat"].append({"role": "assistant", "content": resp})
+        st.chat_message("assistant").write(resp)
