@@ -42,7 +42,7 @@ def cargar_logo_base64():
 
 logo_data_uri = cargar_logo_base64()
 
-# Estilos CSS con Tipografía Cuqui (Comfortaa + Quicksand)
+# Estilos CSS Avanzados con Tipografía Comfortaa + Quicksand y Estética Dulce/Elegante
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
@@ -138,7 +138,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS E INICIALIZACIÓN ---
+# --- BASE DE DATOS COMPLETA PLATINUM CON MIGRADORES ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -159,7 +159,13 @@ def init_db():
                         fecha_nacimiento TEXT,
                         notas TEXT,
                         info_clinica TEXT,
+                        monedero REAL DEFAULT 0.0,
                         rgpd INTEGER DEFAULT 1)''')
+
+    cursor.execute("PRAGMA table_info(clientes)")
+    cols_cli = [c[1] for c in cursor.fetchall()]
+    if "monedero" not in cols_cli:
+        cursor.execute("ALTER TABLE clientes ADD COLUMN monedero REAL DEFAULT 0.0")
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS servicios (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -174,6 +180,7 @@ def init_db():
                         fecha_fin TEXT NOT NULL,
                         cliente_id INTEGER,
                         servicio_id INTEGER,
+                        etiqueta TEXT DEFAULT 'General',
                         notas TEXT,
                         estado_cobro TEXT DEFAULT 'Pendiente',
                         metodo_pago TEXT,
@@ -189,6 +196,8 @@ def init_db():
         cursor.execute("ALTER TABLE citas ADD COLUMN metodo_pago TEXT")
     if "monto_cobrado" not in cols_citas:
         cursor.execute("ALTER TABLE citas ADD COLUMN monto_cobrado REAL DEFAULT 0.0")
+    if "etiqueta" not in cols_citas:
+        cursor.execute("ALTER TABLE citas ADD COLUMN etiqueta TEXT DEFAULT 'General'")
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS cajas (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -223,6 +232,25 @@ def init_db():
     if "metodo_pago" not in cols_fact:
         cursor.execute("ALTER TABLE facturas ADD COLUMN metodo_pago TEXT")
 
+    cursor.execute('''CREATE TABLE IF NOT EXISTS lista_espera (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        cliente_id INTEGER NOT NULL,
+                        servicio_id INTEGER NOT NULL,
+                        preferencia_horario TEXT,
+                        fecha_registro TEXT,
+                        estado TEXT DEFAULT 'Pendiente',
+                        FOREIGN KEY(cliente_id) REFERENCES clientes(id),
+                        FOREIGN KEY(servicio_id) REFERENCES servicios(id))''')
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS consentimientos (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        cliente_id INTEGER NOT NULL,
+                        tipo_tratamiento TEXT NOT NULL,
+                        fecha_firma TEXT NOT NULL,
+                        acepta_rgpd INTEGER DEFAULT 1,
+                        firma_texto TEXT,
+                        FOREIGN KEY(cliente_id) REFERENCES clientes(id))''')
+
     cursor.execute('''CREATE TABLE IF NOT EXISTS gastos (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         fecha TEXT NOT NULL,
@@ -255,12 +283,6 @@ def init_db():
                         fecha_caducidad TEXT,
                         estado TEXT DEFAULT 'Activa')''')
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS bloqueos (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        fecha_inicio TEXT NOT NULL,
-                        fecha_fin TEXT NOT NULL,
-                        motivo TEXT)''')
-
     cursor.execute("SELECT COUNT(*) FROM servicios")
     if cursor.fetchone()[0] == 0:
         servicios_def = [
@@ -292,10 +314,12 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# --- MENÚ SUPERIOR ---
+# --- MENÚ SUPERIOR DE NAVEGACIÓN ---
 opcion = st.tabs([
     "📅 Agenda", 
     "💳 Caja & Cobros", 
+    "✍️ Firma & RGPD",
+    "⏳ Lista Espera",
     "🏛️ Fiscal & Trimestral", 
     "📉 Gastos & Facturas", 
     "📦 Stock Top", 
@@ -321,7 +345,7 @@ def generar_link_whatsapp(telefono, nombre_cliente, fecha_str, hora_str, servici
 def modal_editar_cita(cita_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("""SELECT c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado, c.notas
+    cursor.execute("""SELECT c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.precio, c.estado_cobro, c.metodo_pago, c.monto_cobrado, c.etiqueta, c.notas
                       FROM citas c 
                       JOIN clientes cl ON c.cliente_id = cl.id 
                       JOIN servicios s ON c.servicio_id = s.id 
@@ -333,11 +357,12 @@ def modal_editar_cita(cita_id):
         st.error("No se encontró la cita.")
         return
 
-    f_i, f_f, cl_n, cl_ap, cl_tel, s_n, s_pre, est_c, met_p, monto_c, obs = row
+    f_i, f_f, cl_n, cl_ap, cl_tel, s_n, s_pre, est_c, met_p, monto_c, etiq, obs = row
     nom_cli = f"{cl_n} {cl_ap or ''}".strip()
     dt_i = datetime.datetime.fromisoformat(f_i)
 
     st.markdown(f"### 💆‍♀️ {s_n}")
+    st.markdown(f"🏷️ **Etiqueta:** `{etiq or 'General'}`")
     st.markdown(f"👤 **Cliente:** {nom_cli}")
     st.markdown(f"📅 **Fecha:** {dt_i.strftime('%d/%m/%Y')} a las {dt_i.strftime('%H:%M')}h")
     if obs: st.info(f"📝 **Notas:** {obs}")
@@ -370,7 +395,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
     
     col1, col2 = st.columns(2)
     with col1: monto = st.number_input("Importe (€)", value=float(precio_defecto), step=1.0)
-    with col2: metodo = st.selectbox("Método de Pago", ["Efectivo", "Tarjeta", "Bizum", "Tarjeta Regalo"])
+    with col2: metodo = st.selectbox("Método de Pago", ["Efectivo", "Tarjeta", "Bizum", "Monedero Clienta", "Tarjeta Regalo"])
 
     if st.button("✅ Confirmar Cobro", use_container_width=True, type="primary"):
         hoy_str = datetime.date.today().strftime("%Y-%m-%d")
@@ -379,7 +404,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         
         cursor.execute("UPDATE citas SET estado_cobro='Cobrado', metodo_pago=?, monto_cobrado=? WHERE id=?", (metodo, monto, cita_id))
         
-        if metodo != "Tarjeta Regalo":
+        if metodo not in ["Tarjeta Regalo", "Monedero Clienta"]:
             cursor.execute("SELECT id, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja FROM cajas WHERE fecha=?", (hoy_str,))
             row_caja = cursor.fetchone()
             
@@ -409,24 +434,25 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
         conn.close()
         st.success("¡Cobro registrado!")
         st.rerun()
-        # 1. AGENDA INTERACTIVA
+        # 1. AGENDA INTERACTIVA CON ETIQUETAS
 with opcion[0]:
     st.subheader("Agenda Semanal de Citas")
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute('''SELECT c.id, c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.color, s.precio, c.estado_cobro
+    cursor.execute('''SELECT c.id, c.fecha_inicio, c.fecha_fin, cl.nombre, cl.primer_apellido, cl.telefono, s.nombre, s.color, s.precio, c.estado_cobro, c.etiqueta
                       FROM citas c JOIN clientes cl ON c.cliente_id = cl.id JOIN servicios s ON c.servicio_id = s.id''')
     citas_db = cursor.fetchall()
     conn.close()
 
     events = []
     for cita in citas_db:
-        c_id, f_ini, f_fin, cl_nombre, cl_p_ap, cl_tel, s_nombre, color, precio, est_cobro = cita
+        c_id, f_ini, f_fin, cl_nombre, cl_p_ap, cl_tel, s_nombre, color, precio, est_cobro, etiq = cita
         nom_comp = f"{cl_nombre} {cl_p_ap or ''}".strip()
         prefijo = "✅ " if est_cobro == "Cobrado" else ""
+        tag_txt = f"[{etiq}] " if etiq and etiq != 'General' else ""
         events.append({
             "id": f"cita_{c_id}",
-            "title": f"{prefijo}[{nom_comp}] {s_nombre}",
+            "title": f"{prefijo}{tag_txt}[{nom_comp}] {s_nombre}",
             "start": f_ini, "end": f_fin,
             "backgroundColor": "#2ecc71" if est_cobro == "Cobrado" else color,
             "borderColor": color
@@ -492,159 +518,131 @@ with opcion[1]:
                 if st.button("💶 Cobrar", key=f"cobrar_{c_id}"):
                     modal_cobrar_cita(c_id, nom_cliente, s_nom, s_precio)
 
-# 3. FISCAL & TRIMESTRAL
+# 3. FIRMA DIGITAL DE CONSENTIMIENTOS Y RGPD
 with opcion[2]:
-    st.subheader("🏛️ Panel de Control Fiscal & Estimación de Trimestres")
+    st.subheader("✍️ Firma Digital de Consentimiento Informado & RGPD")
+    st.info("Pasa la tablet o el móvil a la clienta para confirmar sus datos y firmar antes del tratamiento.")
+
+    conn = sqlite3.connect(DB_NAME)
+    df_cli_select = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
+    conn.close()
+
+    if not df_cli_select.empty:
+        c_sel = st.selectbox("Seleccionar Clienta *", options=df_cli_select["id"], format_func=lambda x: df_cli_select[df_cli_select["id"]==x]["nom"].values[0])
+        tipo_trat = st.selectbox("Tratamiento a Realizar", ["Maderoterapia Corporal", "Higiene Facial Profunda / Peeling", "Lifting / Extensión de Pestañas", "Microblading / Micropigmentación", "Tratamiento General Estética"])
+        
+        st.markdown("""
+            **Cláusula de Consentimiento:**
+            Declaro haber sido informada de las características del tratamiento, cuidados posteriores y no presentar contraindicaciones médicas conocidas. Autorizo el tratamiento en *Judit Domingo Centre d'Estètica*.
+        """)
+
+        nombre_firma = st.text_input("Escribe tu Nombre Completo como Firma Digital *")
+        chk_rgpd = st.checkbox("Acepto la Política de Protección de Datos (RGPD) y tratamiento de datos personales.", value=True)
+
+        if st.button("✍️ Guardar Firma de Consentimiento", use_container_width=True):
+            if nombre_firma:
+                conn = sqlite3.connect(DB_NAME)
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO consentimientos (cliente_id, tipo_tratamiento, fecha_firma, acepta_rgpd, firma_texto) VALUES (?,?,?,?,?)",
+                               (c_sel, tipo_trat, datetime.date.today().strftime("%Y-%m-%d"), 1 if chk_rgpd else 0, nombre_firma))
+                conn.commit()
+                conn.close()
+                st.success("¡Consentimiento firmado y guardado en el expediente de la clienta!")
+                st.rerun()
+
+# 4. LISTA DE ESPERA
+with opcion[3]:
+    st.subheader("⏳ Lista de Espera de Citas")
     
+    with st.expander("➕ Añadir Clienta a Lista de Espera", expanded=True):
+        conn = sqlite3.connect(DB_NAME)
+        df_c = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as nom FROM clientes", conn)
+        df_s = pd.read_sql_query("SELECT id, nombre FROM servicios", conn)
+        conn.close()
+
+        if not df_c.empty and not df_s.empty:
+            c_le = st.selectbox("Clienta", options=df_c["id"], format_func=lambda x: df_c[df_c["id"]==x]["nom"].values[0])
+            s_le = st.selectbox("Tratamiento Deseado", options=df_s["id"], format_func=lambda x: df_s[df_s["id"]==x]["nombre"].values[0])
+            pref_h = st.text_input("Preferencia Horaria", placeholder="Ej. Tardes a partir de las 17h o viernes mañana")
+
+            if st.button("➕ Guardar en Lista de Espera"):
+                conn = sqlite3.connect(DB_NAME)
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO lista_espera (cliente_id, servicio_id, preferencia_horario, fecha_registro) VALUES (?,?,?,?)",
+                               (c_le, s_le, pref_h, datetime.date.today().strftime("%Y-%m-%d")))
+                conn.commit()
+                conn.close()
+                st.success("Añadida a lista de espera.")
+                st.rerun()
+
+    conn = sqlite3.connect(DB_NAME)
+    df_le_view = pd.read_sql_query("""SELECT le.id, cl.nombre || ' ' || COALESCE(cl.primer_apellido,'') as 'Clienta', cl.telefono as 'Móvil', s.nombre as 'Tratamiento', le.preferencia_horario as 'Preferencia', le.fecha_registro as 'Anotada el'
+                                      FROM lista_espera le JOIN clientes cl ON le.cliente_id = cl.id JOIN servicios s ON le.servicio_id = s.id WHERE le.estado='Pendiente'""", conn)
+    conn.close()
+    st.dataframe(df_le_view, use_container_width=True)
+
+# 5. FISCAL & TRIMESTRAL
+with opcion[4]:
+    st.subheader("🏛️ Panel Fiscal y Estimación de Trimestres")
     col_f1, col_f2 = st.columns(2)
     with col_f1: anio_f = st.selectbox("Año Fiscal", [2026, 2025])
-    with col_f2: trim_f = st.selectbox("Trimestre a Calcular", ["1T (Ene - Mar)", "2T (Abr - Jun)", "3T (Jul - Sep)", "4T (Oct - Dic)"])
+    with col_f2: trim_f = st.selectbox("Trimestre", ["1T (Ene - Mar)", "2T (Abr - Jun)", "3T (Jul - Sep)", "4T (Oct - Dic)"])
 
     conn = sqlite3.connect(DB_NAME)
     df_f_ing = pd.read_sql_query("SELECT total, metodo_pago FROM facturas", conn)
     df_f_gas = pd.read_sql_query("SELECT base_imponible, iva_porcentaje, total FROM gastos", conn)
     conn.close()
 
-    total_ventas = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
-    iva_repercutido = total_ventas * 0.21
+    tot_v = df_f_ing['total'].sum() if not df_f_ing.empty else 0.0
+    iva_rep = tot_v * 0.21
+    tot_gb = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
+    tot_gi = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
 
-    total_gastos_base = df_f_gas['base_imponible'].sum() if not df_f_gas.empty else 0.0
-    total_gastos_iva = (df_f_gas['total'] - df_f_gas['base_imponible']).sum() if not df_f_gas.empty else 0.0
-
-    iva_a_pagar = iva_repercutido - total_gastos_iva
-    rendimiento_neto = total_ventas - (total_gastos_base + total_gastos_iva)
-    irpf_estimado = max(0.0, rendimiento_neto * 0.20)
+    iva_pag = iva_rep - tot_gi
+    rend_net = tot_v - (tot_gb + tot_gi)
+    irpf_est = max(0.0, rend_net * 0.20)
 
     st.markdown("---")
-    c_m1, c_m2, c_m3 = st.columns(3)
-    with c_m1:
-        st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{iva_a_pagar:.2f} €</h2><p>Repercutido - Soportado</p></div>", unsafe_allow_html=True)
-    with c_m2:
-        st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_estimado:.2f} €</h2><p>20% s/ Rendimiento Neto</p></div>", unsafe_allow_html=True)
-    with c_m3:
-        st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2><p>Ingresos - Gastos Totales</p></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1: st.markdown(f"<div class='card-metric'><h4>📊 IVA a Liquidar (Mod. 303)</h4><h2 style='color:#e6c566;'>{iva_pag:.2f} €</h2></div>", unsafe_allow_html=True)
+    with c2: st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod. 130)</h4><h2 style='color:#74b9ff;'>{irpf_est:.2f} €</h2></div>", unsafe_allow_html=True)
+    with c3: st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto Real</h4><h2 style='color:#55efc4;'>{rend_net:.2f} €</h2></div>", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("📊 Exportar Informe Oficial para la Gestoría (.CSV / Excel)", use_container_width=True):
-        if not df_f_ing.empty:
-            csv = df_f_ing.to_csv(index=False).encode('utf-8')
-            st.download_button(label="💾 Guardar Excel para Gestoría", data=csv, file_name=f"Contabilidad_{trim_f[:2]}_{anio_f}.csv", mime='text/csv')
-
-# 4. GASTOS & FACTURAS
-with opcion[3]:
-    st.subheader("📉 Registro de Facturas y Compras de Material")
-
-    with st.expander("➕ Subir Nueva Factura / Gasto", expanded=True):
-        with st.form("form_gasto"):
-            col1, col2 = st.columns(2)
-            with col1: prov = st.text_input("Proveedor (Ej. Iberdrola, Almacén Cosmética)")
-            with col2: cat = st.selectbox("Categoría", ["Suministros (Luz/Agua/Teléfono)", "Productos Cosméticos", "Gestoría/Seguros", "Otros"])
-
-            concept = st.text_input("Concepto Factura")
-            col3, col4 = st.columns(2)
-            with col3: base = st.number_input("Base Imponible (€)", value=0.0, step=5.0)
-            with col4: iva = st.selectbox("IVA %", [21.0, 10.0, 4.0, 0.0])
-
-            foto = st.file_uploader("📷 Subir Foto o PDF de la Factura", type=["jpg", "png", "pdf"])
-
-            if st.form_submit_button("💾 Guardar Gasto"):
-                if prov and base > 0:
-                    ruta = None
-                    if foto:
-                        nom_f = f"gasto_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{foto.name.split('.')[-1]}"
-                        ruta = os.path.join(GASTOS_DIR, nom_f)
-                        with open(ruta, "wb") as f: f.write(foto.getbuffer())
-
-                    tot = base * (1 + (iva / 100))
-                    conn = sqlite3.connect(DB_NAME)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO gastos (fecha, proveedor, concepto, categoria, base_imponible, iva_porcentaje, total, ruta_factura) VALUES (?,?,?,?,?,?,?,?)",
-                                   (datetime.date.today().strftime("%Y-%m-%d"), prov, concept, cat, base, iva, tot, ruta))
-                    conn.commit()
-                    conn.close()
-                    st.success("Gasto registrado.")
-                    st.rerun()
-
+# 6. GASTOS & FACTURAS
+with opcion[5]:
+    st.subheader("📉 Gastos del Local y Compras")
     conn = sqlite3.connect(DB_NAME)
-    df_g = pd.read_sql_query("SELECT fecha as 'Fecha', proveedor as 'Proveedor', concepto as 'Concepto', base_imponible as 'Base (€)', total as 'Total (€)' FROM gastos ORDER BY fecha DESC", conn)
+    df_g = pd.read_sql_query("SELECT fecha as 'Fecha', proveedor as 'Proveedor', concepto as 'Concepto', total as 'Total (€)' FROM gastos ORDER BY fecha DESC", conn)
     conn.close()
     st.dataframe(df_g, use_container_width=True)
 
-# 5. STOCK TOP
-with opcion[4]:
-    st.subheader("📦 Control de Stock Seleccionado (Productos Top & Cabina)")
-
-    with st.expander("➕ Añadir Producto al Inventario", expanded=False):
-        with st.form("form_stock"):
-            col1, col2 = st.columns(2)
-            with col1: nom_prod = st.text_input("Nombre del Producto *")
-            with col2: cat_prod = st.selectbox("Tipo", ["Producto Venta Clienta", "Uso Cabina / Tratamiento"])
-
-            col3, col4, col5 = st.columns(3)
-            with col3: coste = st.number_input("Precio Coste (€)", value=0.0)
-            with col4: pvp = st.number_input("PVP Venta (€)", value=0.0)
-            with col5: unidades = st.number_input("Unidades en Stock", value=5, step=1)
-
-            if st.form_submit_button("💾 Guardar Producto"):
-                if nom_prod:
-                    conn = sqlite3.connect(DB_NAME)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO stock (nombre, categoria, precio_coste, pvp, unidades) VALUES (?,?,?,?,?)",
-                                   (nom_prod, cat_prod, coste, pvp, unidades))
-                    conn.commit()
-                    conn.close()
-                    st.success("Producto añadido.")
-                    st.rerun()
-
+# 7. STOCK TOP
+with opcion[6]:
+    st.subheader("📦 Control de Stock Seleccionado")
     conn = sqlite3.connect(DB_NAME)
-    df_st = pd.read_sql_query("SELECT id, nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
+    df_st = pd.read_sql_query("SELECT nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Unidades Stock' FROM stock", conn)
     conn.close()
     st.dataframe(df_st, use_container_width=True)
 
-# 6. MARKETING & REGALOS
-with opcion[5]:
-    st.subheader("📣 Gestor de Tarjetas Regalo y Promociones")
-    
-    with st.expander("🎁 Emitir Nueva Tarjeta Regalo", expanded=True):
-        with st.form("form_tr"):
-            cod_tr = f"REGALO-{random.randint(1000, 9999)}"
-            st.text_input("Código de la Tarjeta", value=cod_tr, disabled=True)
-            
-            c1, c2 = st.columns(2)
-            with c1: comprador = st.text_input("Comprador (Quien regala)")
-            with c2: beneficiario = st.text_input("Beneficiaria (Quien la disfruta)")
-
-            c3, c4 = st.columns(2)
-            with c3: concepto_tr = st.text_input("Tratamiento / Concepto", value="Tratamiento Facial / Saldo Libre")
-            with c4: valor_tr = st.number_input("Importe (€)", value=50.0, step=5.0)
-
-            if st.form_submit_button("🎁 Generar Tarjeta Regalo"):
-                if comprador and beneficiario:
-                    conn = sqlite3.connect(DB_NAME)
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO tarjetas_regalo (codigo, comprador, beneficiario, concepto, saldo_inicial, saldo_actual, fecha_emision, estado) VALUES (?,?,?,?,?,?,?,'Activa')",
-                                   (cod_tr, comprador, beneficiario, concepto_tr, valor_tr, valor_tr, datetime.date.today().strftime("%Y-%m-%d")))
-                    conn.commit()
-                    conn.close()
-                    st.success(f"¡Tarjeta Regalo {cod_tr} emitida!")
-                    st.rerun()
-
+# 8. MARKETING & REGALOS
+with opcion[7]:
+    st.subheader("📣 Tarjetas Regalo y Fidelización")
     conn = sqlite3.connect(DB_NAME)
-    df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', concepto as 'Concepto', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
+    df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
     conn.close()
     st.dataframe(df_tr_list, use_container_width=True)
 
-# 7. CLIENTES
-with opcion[6]:
-    st.subheader("Fichero de Clientes")
+# 9. CLIENTES Y MONEDERO
+with opcion[8]:
+    st.subheader("👤 Fichero de Clientes y Monedero Saldo")
     conn = sqlite3.connect(DB_NAME)
-    df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email' FROM clientes ORDER BY id DESC", conn)
+    df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', PRINTF('%.2f €', monedero) as 'Saldo Monedero' FROM clientes ORDER BY id DESC", conn)
     conn.close()
     st.dataframe(df_cli, use_container_width=True)
 
-# 8. SERVICIOS
-with opcion[7]:
-    st.subheader("Catálogo de Tratamientos")
+# 10. SERVICIOS
+with opcion[9]:
+    st.subheader("💆‍♀️ Catálogo de Tratamientos")
     conn = sqlite3.connect(DB_NAME)
     df_serv = pd.read_sql_query("SELECT nombre as 'Tratamiento', duracion_min as 'Duración (min)', precio as 'Precio (€)' FROM servicios", conn)
     conn.close()
