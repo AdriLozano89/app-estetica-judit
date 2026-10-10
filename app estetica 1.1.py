@@ -7,7 +7,8 @@ import hashlib
 import os
 import base64
 import urllib.parse
-import random
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -23,7 +24,7 @@ GASTOS_DIR = "facturas_gastos"
 if not os.path.exists(GASTOS_DIR):
     os.makedirs(GASTOS_DIR)
 
-# Función para cargar el logo en Base64
+# Cargar el logo local en Base64
 def cargar_logo_base64():
     directorio = os.path.dirname(os.path.abspath(__file__))
     nombres_posibles = ["imagen_2026-10-08_205258476.jpg", "images.jpg", "logo.jpg", "logo.png", "images.png"]
@@ -35,36 +36,36 @@ def cargar_logo_base64():
                 with open(ruta_completa, "rb") as image_file:
                     encoded_string = base64.b64encode(image_file.read()).decode()
                     mime_type = "image/png" if nombre.endswith(".png") else "image/jpeg"
-                    return f"data:{mime_type};base64,{encoded_string}"
+                    return f"data:{mime_type};base64,{encoded_string}", ruta_completa
             except Exception:
                 pass
-    return None
+    return None, None
 
-logo_data_uri = cargar_logo_base64()
+logo_data_uri, ruta_logo_file = cargar_logo_base64()
 
-# GESTIÓN DE SESIÓN Y AUTENTICACIÓN
+# GESTIÓN DE SESIÓN
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = True
 
-# ESTILOS CSS CON MARCA DE AGUA EN FONDO (25% OPACIDAD)
+# CSS CON LOGO DE FONDO GIGANTE Y FUENTE ESTILO BALQIS (Great Vibes / Alex Brush)
 css_logo_fondo = ""
 if logo_data_uri:
     css_logo_fondo = f"""
     .stApp::before {{
         content: "";
         position: fixed;
-        top: 50%;
+        top: 52%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 80vw;
-        max-width: 380px;
-        height: 80vh;
-        max-height: 380px;
+        width: 85vw;
+        max-width: 650px;
+        height: 75vh;
+        max-height: 650px;
         background-image: url("{logo_data_uri}");
         background-repeat: no-repeat;
         background-position: center;
         background-size: contain;
-        opacity: 0.25 !important;
+        opacity: 0.30 !important;
         pointer-events: none !important;
         z-index: 0 !important;
     }}
@@ -72,7 +73,7 @@ if logo_data_uri:
 
 st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Great+Vibes&family=Quicksand:wght@400;500;600;700&display=swap');
 
     {css_logo_fondo}
 
@@ -80,69 +81,71 @@ st.markdown(f"""
     header[data-testid="stHeader"] {{ background-color: transparent !important; z-index: 100 !important; }}
 
     .stApp {{
-        background-color: #0d0c12 !important;
+        background-color: #0b0a0f !important;
         color: #f7f5fd !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-family: 'Quicksand', sans-serif !important;
     }}
 
     .block-container {{
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-        padding-left: 0.8rem !important;
-        padding-right: 0.8rem !important;
+        padding-top: 0.8rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
         max-width: 100% !important;
         position: relative !important;
         z-index: 1 !important;
     }}
 
+    /* TÍTULOS CURSIVOS ELEGANTES ESTILO BALQIS */
     h1, h2, h3, .brand-title {{
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Great Vibes', 'Alex Brush', cursive !important;
         color: #e6c566 !important;
-        letter-spacing: 0.4px !important;
-        font-weight: 600 !important;
+        letter-spacing: 1px !important;
+        font-weight: 400 !important;
+        font-size: 38px !important;
     }}
 
     .brand-subtext {{
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-family: 'Quicksand', sans-serif;
         font-size: 11px;
         color: #d4af37;
-        letter-spacing: 2.5px;
-        margin-top: -2px;
+        letter-spacing: 3px;
+        margin-top: -8px;
         text-transform: uppercase;
         font-weight: 600;
     }}
 
     .card-metric {{
-        background: rgba(24, 22, 36, 0.85);
-        border: 1px solid #332d43;
+        background: rgba(22, 19, 32, 0.88);
+        border: 1px solid #3d3550;
         border-left: 4px solid #e6c566;
         border-radius: 14px;
-        padding: 16px;
+        padding: 14px;
         text-align: center;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.4);
         margin-bottom: 10px;
     }}
 
     .stButton>button {{
         background: linear-gradient(135deg, #e6c566 0%, #ba9530 100%) !important;
         color: #1a1600 !important;
-        font-family: 'Outfit', sans-serif !important;
-        font-weight: 600 !important;
+        font-family: 'Quicksand', sans-serif !important;
+        font-weight: 700 !important;
         font-size: 13px !important;
-        padding: 10px 20px !important;
+        padding: 8px 18px !important;
         border-radius: 14px !important;
         border: none !important;
-        box-shadow: 0 3px 10px rgba(230, 197, 102, 0.2) !important;
+        box-shadow: 0 3px 10px rgba(230, 197, 102, 0.25) !important;
         width: 100% !important;
     }}
 
     .stLinkButton>a {{
         background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
         color: #ffffff !important;
-        font-family: 'Outfit', sans-serif !important;
-        font-weight: 600 !important;
+        font-family: 'Quicksand', sans-serif !important;
+        font-weight: 700 !important;
         font-size: 13px !important;
-        padding: 10px 20px !important;
+        padding: 8px 18px !important;
         border-radius: 14px !important;
         border: none !important;
         text-decoration: none !important;
@@ -152,53 +155,64 @@ st.markdown(f"""
     }}
 
     .stTabs [data-baseweb="tab-list"] {{ 
-        gap: 6px; 
+        gap: 4px; 
         overflow-x: auto;
     }}
     .stTabs [data-baseweb="tab"] {{
         border-radius: 10px 10px 0px 0px !important;
-        padding: 10px 14px !important;
-        background-color: rgba(21, 19, 33, 0.9) !important;
+        padding: 8px 12px !important;
+        background-color: rgba(18, 16, 26, 0.9) !important;
         color: #bfa8db !important;
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Quicksand', sans-serif !important;
         font-size: 12px !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
     }}
     .stTabs [aria-selected="true"] {{
-        background-color: rgba(37, 32, 53, 0.95) !important;
+        background-color: rgba(35, 30, 50, 0.95) !important;
         color: #e6c566 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }}
 
+    /* FIX HORAS Y TEXTOS EN CALENDARIO */
     .fc {{
         font-size: 12px !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-family: 'Quicksand', sans-serif !important;
+        background-color: rgba(15, 14, 22, 0.85) !important;
+        border-radius: 12px;
+        padding: 6px;
+    }}
+    .fc-timegrid-slot {{
+        height: 38px !important;
+    }}
+    .fc-timegrid-slot-label-frame {{
+        text-align: center !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        color: #d4af37 !important;
     }}
     .fc-toolbar-title {{
-        font-size: 16px !important;
-        font-family: 'Outfit', sans-serif !important;
+        font-size: 18px !important;
+        font-family: 'Great Vibes', cursive !important;
         color: #e6c566 !important;
-        font-weight: 600 !important;
     }}
     .fc-button {{
-        padding: 6px 12px !important;
-        font-size: 12px !important;
+        padding: 4px 10px !important;
+        font-size: 11px !important;
         border-radius: 10px !important;
-        font-family: 'Outfit', sans-serif !important;
     }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- CONTROL DE LOGIN ---
+# CONTROL LOGIN
 if not st.session_state["authenticated"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
     with col_l2:
         st.markdown("""
             <div class='card-metric'>
-                <h2>Judit Domingo</h2>
+                <h2 style='font-family: "Great Vibes", cursive; font-size:42px;'>Judit Domingo</h2>
                 <p class='brand-subtext'>CENTRE D'ESTÈTICA</p>
-                <hr style='border-color: #332d43;'>
+                <hr style='border-color: #3d3550;'>
             </div>
         """, unsafe_allow_html=True)
         usr = st.text_input("Usuario")
@@ -212,7 +226,7 @@ if not st.session_state["authenticated"]:
                 st.error("Usuario o contraseña incorrectos.")
     st.stop()
 
-# --- BASE DE DATOS E INICIALIZACIÓN ---
+# BASE DE DATOS
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -343,13 +357,13 @@ def init_db():
 
 init_db()
 
-# --- HEADER SUPERIOR CON BOTÓN DE SALIR FUNCIONAL ---
+# HEADER
 col_h1, col_h2 = st.columns([7, 3])
 with col_h1:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 10px;">
             <div>
-                <div class="brand-title" style="font-size: 24px; font-weight:600; line-height:1.1;">Judit Domingo</div>
+                <div class="brand-title" style="font-size: 38px; line-height:0.9;">Judit Domingo</div>
                 <div class="brand-subtext">CENTRE D'ESTÈTICA</div>
             </div>
         </div>
@@ -359,7 +373,7 @@ with col_h2:
         st.session_state["authenticated"] = False
         st.rerun()
 
-# --- MENÚ DE NAVEGACIÓN ---
+# NAVEGACIÓN
 opcion = st.tabs([
     "📅 Agenda", 
     "💳 Caja & Cobros", 
@@ -379,6 +393,49 @@ def generar_link_whatsapp(telefono, texto_mensaje):
     if tel_clean and len(tel_clean) == 9 and not tel_clean.startswith("34"):
         tel_clean = f"34{tel_clean}"
     return f"https://api.whatsapp.com/send?phone={tel_clean}&text={urllib.parse.quote(texto_mensaje, encoding='utf-8')}"
+
+# GENERADOR DE IMAGEN TARJETA REGALO FÍSICA (Fondo Negro + Bordes Dorados)
+def generar_tarjeta_regalo_img(codigo, comprador, beneficiario, concepto, importe):
+    ancho, alto = 1000, 580
+    img = Image.new("RGB", (ancho, alto), color="#0f0e13")
+    draw = ImageDraw.Draw(img)
+
+    # Marco dorado doble
+    draw.rectangle([20, 20, ancho-20, alto-20], outline="#e6c566", width=4)
+    draw.rectangle([30, 30, ancho-30, alto-30], outline="#ba9530", width=2)
+
+    # Pegar Logo transparente al centro si existe
+    if ruta_logo_file and os.path.exists(ruta_logo_file):
+        try:
+            logo_img = Image.open(ruta_logo_file).convert("RGBA")
+            logo_img.thumbnail((260, 260))
+            # Crear marca de agua con opacidad suave
+            alpha = logo_img.split()[3]
+            alpha = alpha.point(lambda p: int(p * 0.25))
+            logo_img.putalpha(alpha)
+            pos_x = (ancho - logo_img.width) // 2
+            pos_y = (alto - logo_img.height) // 2
+            img.paste(logo_img, (pos_x, pos_y), logo_img)
+        except Exception:
+            pass
+
+    # Textos elegantes
+    draw.text((ancho//2, 70), "Judit Domingo", fill="#e6c566", anchor="mm", font_size=52)
+    draw.text((ancho//2, 120), "CENTRE D'ESTÈTICA — TARJETA REGALO", fill="#d4af37", anchor="mm", font_size=20)
+
+    draw.text((80, 200), f"Para: {beneficiario}", fill="#ffffff", font_size=30)
+    draw.text((80, 260), f"De: {comprador}", fill="#dcd6f7", font_size=26)
+    draw.text((80, 320), f"Tratamiento / Regalo: {concepto}", fill="#e6c566", font_size=26)
+
+    # Valor e Importe destacado
+    draw.rectangle([ancho-320, alto-160, ancho-60, alto-60], fill="#1e192c", outline="#e6c566", width=2)
+    draw.text((ancho-190, alto-110), f"{importe:.2f} €", fill="#e6c566", anchor="mm", font_size=38)
+
+    draw.text((80, alto-80), f"Código Regalo: {codigo}", fill="#a29bfe", font_size=22)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 
 # MODAL NUEVA CITA
 @st.dialog("➕ Agendar Nueva Cita")
@@ -461,71 +518,7 @@ def modal_editar_cita(cita_id):
     
     if tel_destino:
         txt_wa = (
-            f"Hola {nom_cli}! ✨\n\n"
-            f"Te recordamos tu cita en *Judit Domingo - Centre d'Estètica* "
-            f"para el servicio de *{s_n}* el día *{dt_i.strftime('%d/%m/%Y')}* a las *{dt_i.strftime('%H:%M')}h*.\n\n"
-            f"Por favor, confírmanos si puedes asistir. ¡Te esperamos! 💆‍♀️"
-        )
-        url_wa = generar_link_whatsapp(tel_destino, txt_wa)
-        st.link_button("📲 Enviar Recordatorio por WhatsApp", url_wa, use_container_width=True)
-
-    st.markdown("---")
-    if st.button("🗑️ Eliminar Cita", use_container_width=True):
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM citas WHERE id = ?", (cita_id,))
-        conn.commit()
-        conn.close()
-        st.success("Cita eliminada.")
-        st.rerun()
-
-@st.dialog("💶 Cobrar Servicio del Día")
-def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_defecto):
-    st.markdown(f"**Cliente:** {cliente_nom}")
-    st.markdown(f"**Servicio:** {servicio_nom}")
-    
-    col1, col2 = st.columns(2)
-    with col1: monto = st.number_input("Importe (€)", value=float(precio_defecto), step=1.0)
-    with col2: metodo = st.selectbox("Método de Pago", ["Efectivo", "Tarjeta", "Bizum", "Monedero Clienta", "Tarjeta Regalo"])
-
-    if st.button("✅ Confirmar Cobro", use_container_width=True, type="primary"):
-        hoy_str = datetime.date.today().strftime("%Y-%m-%d")
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        
-        cursor.execute("UPDATE citas SET estado_cobro='Cobrado', metodo_pago=?, monto_cobrado=? WHERE id=?", (metodo, monto, cita_id))
-        
-        if metodo not in ["Tarjeta Regalo", "Monedero Clienta"]:
-            cursor.execute("SELECT id, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja FROM cajas WHERE fecha=?", (hoy_str,))
-            row_caja = cursor.fetchone()
-            
-            if row_caja:
-                c_id, ef, tar, biz, ing, tot = row_caja
-                cursor.execute("UPDATE cajas SET abonos_efectivo=?, abonos_tarjeta=?, abonos_bizum=?, ingresos=?, total_caja=?, estado='Abierta' WHERE id=?",
-                               (ef + (monto if metodo == "Efectivo" else 0),
-                                tar + (monto if metodo == "Tarjeta" else 0),
-                                biz + (monto if metodo == "Bizum" else 0),
-                                ing + monto, tot + monto, c_id))
-            else:
-                cursor.execute("INSERT INTO cajas (fecha, abonos_efectivo, abonos_tarjeta, abonos_bizum, ingresos, total_caja, estado) VALUES (?,?,?,?,?,?,'Abierta')",
-                               (hoy_str, monto if metodo == "Efectivo" else 0, monto if metodo == "Tarjeta" else 0, monto if metodo == "Bizum" else 0, monto, monto))
-
-        cursor.execute("SELECT hash_registro FROM facturas ORDER BY id DESC LIMIT 1")
-        last_row = cursor.fetchone()
-        hash_ant = last_row[0] if last_row else "00000000000000000000000000000000"
-        num_f = f"F{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
-        fecha_h = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        cadena = f"{num_f}|{fecha_h}|{monto:.2f}|{hash_ant}"
-        hash_reg = hashlib.sha256(cadena.encode('utf-8')).hexdigest()
-        
-        cursor.execute("INSERT INTO facturas (num_factura, fecha_hora, concepto, total, metodo_pago, hash_registro) VALUES (?,?,?,?,?,?)",
-                       (num_f, fecha_h, f"{servicio_nom} - {cliente_nom}", monto, metodo, hash_reg))
-
-        conn.commit()
-        conn.close()
-        st.success("¡Cobro registrado!")
-        st.rerun()
-# 1. AGENDA
+    # 1. AGENDA REPARADA Y AMPLIA (ALTURA COMPLETA Y SIN TEXTOS DUPLICADOS)
 with opcion[0]:
     st.subheader("Agenda de Citas")
     conn = sqlite3.connect(DB_NAME)
@@ -556,7 +549,18 @@ with opcion[0]:
         "slotMinTime": "08:30:00",
         "slotMaxTime": "20:30:00",
         "slotDuration": "00:30:00",
-        "height": "auto",
+        "slotLabelFormat": {
+            "hour": "2-digit",
+            "minute": "2-digit",
+            "hour12": False
+        },
+        "dayHeaderFormat": {
+            "weekday": "short",
+            "day": "numeric",
+            "month": "numeric",
+            "omitCommas": True
+        },
+        "height": 750,
         "selectable": True,
         "headerToolbar": {
             "left": "prev,next",
@@ -570,7 +574,7 @@ with opcion[0]:
         }
     }
 
-    state = calendar(events=events, options=cal_options, key="koibox_cal_v12")
+    state = calendar(events=events, options=cal_options, key="koibox_cal_v13")
 
     if state.get("eventClick"):
         raw_id = state["eventClick"]["event"]["id"]
@@ -676,12 +680,56 @@ with opcion[2]:
             df_citas_cob["hora"] = pd.to_datetime(df_citas_cob["fecha_inicio"]).dt.hour
             st.bar_chart(df_citas_cob["hora"].value_counts().sort_index())
 
-# 4. MARKETING
+# 4. MARKETING Y CREACIÓN DE TARJETAS REGALO FÍSICAS IMPRIMIBLES
 with opcion[3]:
     st.subheader("📣 Módulo de Marketing y Fidelización")
-    tab_m1, tab_m2, tab_m3 = st.tabs(["🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp", "🎁 Tarjetas Regalo"])
+    tab_m1, tab_m2, tab_m3 = st.tabs(["🎁 Emisión de Tarjeta Regalo", "🎂 Cumpleaños del Mes", "💬 Plantillas WhatsApp"])
 
     with tab_m1:
+        st.markdown("### 🎁 Crear Nueva Tarjeta Regalo")
+        col_tr1, col_tr2 = st.columns(2)
+        with col_tr1:
+            tr_comprador = st.text_input("Comprador/a (Persona que regala) *")
+            tr_beneficiario = st.text_input("Beneficiario/a (Persona que recibe) *")
+            tr_concepto = st.text_input("Concepto / Tratamiento Incluido *", value="Tratamiento Facial VIP / Maderoterapia")
+        with col_tr2:
+            tr_importe = st.number_input("Importe (€) *", value=50.0, step=5.0)
+            tr_caducidad = st.date_input("Fecha Caducidad", value=datetime.date.today() + datetime.timedelta(days=90))
+            tr_tel_envio = st.text_input("Móvil Beneficiaria (Para envío por WhatsApp)")
+
+        if st.button("🎁 Emitir y Guardar Tarjeta Regalo", use_container_width=True, type="primary"):
+            if tr_comprador and tr_beneficiario and tr_concepto:
+                cod_tr = f"TR-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
+                conn = sqlite3.connect(DB_NAME)
+                cursor = conn.cursor()
+                cursor.execute("""INSERT INTO tarjetas_regalo (codigo, comprador, beneficiario, concepto, saldo_inicial, saldo_actual, fecha_emision, fecha_caducidad, estado)
+                                  VALUES (?,?,?,?,?,?,?,?,'Activa')""",
+                               (cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe, tr_importe, datetime.date.today().strftime("%Y-%m-%d"), tr_caducidad.strftime("%Y-%m-%d")))
+                conn.commit()
+                conn.close()
+                st.success(f"¡Tarjeta Regalo {cod_tr} Emitida Correctamente!")
+
+                # Generar Imagen Tarjeta Física
+                img_bytes = generar_tarjeta_regalo_img(cod_tr, tr_comprador, tr_beneficiario, tr_concepto, tr_importe)
+                st.image(img_bytes, caption="Vista Previa Tarjeta Regalo Física", use_container_width=True)
+
+                col_d1, col_d2 = st.columns(2)
+                with col_d1:
+                    st.download_button("📥 Descargar Tarjeta en PNG (Para Imprimir)", data=img_bytes, file_name=f"Tarjeta_Regalo_{cod_tr}.png", mime="image/png", use_container_width=True)
+                with col_d2:
+                    if tr_tel_envio:
+                        msg_tr = f"¡Hola {tr_beneficiario}! 🎁 Te han regalado una Tarjeta Regalo en *Judit Domingo Centre d'Estètica* por valor de *{tr_importe:.2f}€* (*{tr_concepto}*). ¡Llámanos para agendar tu cita!"
+                        url_tr_wa = generar_link_whatsapp(tr_tel_envio, msg_tr)
+                        st.link_button("📲 Notificar por WhatsApp", url_tr_wa, use_container_width=True)
+
+        st.markdown("---")
+        st.markdown("### 📋 Tarjetas Regalo Emitidas")
+        conn = sqlite3.connect(DB_NAME)
+        df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', concepto as 'Tratamiento', saldo_actual as 'Saldo Disponible (€)', fecha_caducidad as 'Caducidad' FROM tarjetas_regalo WHERE estado='Activa' ORDER BY id DESC", conn)
+        conn.close()
+        st.dataframe(df_tr_list, use_container_width=True)
+
+    with tab_m2:
         st.markdown("### 🎂 Próximos Cumpleaños")
         mes_actual = datetime.date.today().strftime("%m")
         conn = sqlite3.connect(DB_NAME)
@@ -702,7 +750,7 @@ with opcion[3]:
                         url_cump = generar_link_whatsapp(tel_c, msg_cump)
                         st.link_button("📲 Felicitar", url_cump, use_container_width=True)
 
-    with tab_m2:
+    with tab_m3:
         st.markdown("### 💬 Difusión y Promociones")
         plantilla = st.selectbox("Selecciona Tipo de Campaña", [
             "Lanzamiento de Tratamiento (Maderoterapia/Facial)",
@@ -718,13 +766,6 @@ with opcion[3]:
             txt_promo = "Hola! ✨ Muchas gracias por confiar en Judit Domingo Centre d'Estètica. Nos encantaría saber tu opinión: ¿nos dejas 5 estrellas en Google? Nos ayuda muchísimo: https://g.page/r/juditestetica"
 
         st.text_area("Texto de la Promoción (Copia y envía por WhatsApp)", value=txt_promo, height=100)
-
-    with tab_m3:
-        st.markdown("### 🎁 Tarjetas Regalo Emitidas")
-        conn = sqlite3.connect(DB_NAME)
-        df_tr_list = pd.read_sql_query("SELECT codigo as 'Código', comprador as 'Comprador', beneficiario as 'Beneficiaria', saldo_actual as 'Saldo Disponible (€)' FROM tarjetas_regalo WHERE estado='Activa'", conn)
-        conn.close()
-        st.dataframe(df_tr_list, use_container_width=True)
 
 # 5. CLIENTES
 with opcion[4]:
