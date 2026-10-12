@@ -94,6 +94,13 @@ def init_db():
     cursor.execute('''CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, categoria TEXT DEFAULT 'Producto Venta', precio_coste REAL NOT NULL, pvp REAL NOT NULL, unidades INTEGER NOT NULL, minimo_alerta INTEGER DEFAULT 2)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS tarjetas_regalo (id INTEGER PRIMARY KEY AUTOINCREMENT, codigo TEXT UNIQUE NOT NULL, comprador TEXT NOT NULL, beneficiario TEXT NOT NULL, concepto TEXT NOT NULL, saldo_inicial REAL NOT NULL, saldo_actual REAL NOT NULL, fecha_emision TEXT NOT NULL, fecha_caducidad TEXT, estado TEXT DEFAULT 'Activa')''')
     
+    # MIGRACIÓN AUTOMÁTICA DE COLUMNAS PARA EVITAR ERRORES DE BASE DE DATOS
+    cursor.execute("PRAGMA table_info(clientes)")
+    cols_cli = [row[1] for row in cursor.fetchall()]
+    if "info_clinica" not in cols_cli:
+        try: cursor.execute("ALTER TABLE clientes ADD COLUMN info_clinica TEXT")
+        except: pass
+
     cursor.execute("SELECT COUNT(*) FROM servicios")
     if cursor.fetchone()[0] == 0:
         servicios_def = [("Manicura Semipermanente", 45, 25.0, "#e74c3c"), ("Acrylgel uñas largas", 60, 40.0, "#9b59b6"), ("Higiene Facial Profunda", 60, 45.0, "#3498db"), ("Maderoterapia Corporal", 60, 50.0, "#2ecc71")]
@@ -130,7 +137,7 @@ def renderizar_tarjeta_regalo_html(codigo, comprador, beneficiario, concepto, im
         </div>
     </div>
     """
-    # MODALES Y GESTIÓN DE CITAS (CORREGIDO DESFASE HORARIO DE 2H)
+# MODALES Y GESTIÓN DE CITAS (CON HORA EXACTA Y SIN DESFASE)
 @st.dialog("➕ Agendar Nueva Cita")
 def modal_crear_cita(fecha_por_defecto=None, hora_por_defecto=None):
     conn = sqlite3.connect(DB_NAME)
@@ -269,7 +276,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_def):
         conn.close()
         st.success("¡Cobro y factura registrados!")
         st.rerun()
-         # 4. INTERFAZ EN 5 BLOQUES COMPLETOS
+# 4. INTERFAZ EN 5 BLOQUES COMPLETOS
 col_h1, col_h2 = st.columns([8, 2])
 with col_h1:
     st.markdown("""
@@ -287,7 +294,7 @@ bloques = st.tabs([
     "📊 Analítica & Legal"
 ])
 
-# BLOQUE 1: AGENDA (CON ZONA HORARIA LOCAL SIN DESFASE)
+# BLOQUE 1: AGENDA (CON ZONA HORARIA LOCAL CORREGIDA)
 with bloques[0]:
     col_a1, col_a2 = st.columns([7, 3])
     with col_a1: st.subheader("Agenda de Citas")
@@ -317,7 +324,7 @@ with bloques[0]:
         "headerToolbar": {"left": "prev,next today", "center": "title", "right": "timeGridWeek,timeGridDay"}
     }
 
-    st_cal = calendar(events=events, options=cal_opts, key="app_cal_pro_v4")
+    st_cal = calendar(events=events, options=cal_opts, key="app_cal_pro_v5")
 
     if st_cal.get("eventClick"):
         raw_id = st_cal["eventClick"]["event"]["id"]
@@ -326,7 +333,6 @@ with bloques[0]:
 
     if st_cal.get("dateClick"):
         click_str = st_cal["dateClick"]["date"]
-        # Extracción exacta de fecha y hora local sin desfase de zona horaria
         clean_str = click_str.replace("Z", "").split("+")[0]
         f_def = clean_str[:10]
         h_def = clean_str[11:16] if len(clean_str) >= 16 else "10:00"
@@ -395,7 +401,7 @@ with bloques[1]:
         with c_m2: st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod 130)</h4><h2 style='color:#74b9ff;'>{max(0.0, rendimiento_neto*0.2):.2f} €</h2></div>", unsafe_allow_html=True)
         with c_m3: st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2></div>", unsafe_allow_html=True)
 
-# BLOQUE 3: GESTIÓN DE CENTRO (TODAS LAS OPCIONES Y FICHEROS COMPLETOS)
+# BLOQUE 3: GESTIÓN DE CENTRO (CON COMPROBACIÓN SEGURA DE COLUMNAS)
 with bloques[2]:
     tab_g1, tab_g2, tab_g3 = st.tabs(["👤 Fichero Clientes", "💆‍♀️ Tratamientos", "📦 Control Stock"])
 
@@ -426,7 +432,9 @@ with bloques[2]:
                     st.rerun()
 
         conn = sqlite3.connect(DB_NAME)
-        df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email', info_clinica as 'Notas Médicas' FROM clientes ORDER BY id DESC", conn)
+        cols = [info[1] for info in conn.execute("PRAGMA table_info(clientes)").fetchall()]
+        col_med = "info_clinica" if "info_clinica" in cols else "notas"
+        df_cli = pd.read_sql_query(f"SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email', COALESCE({col_med},'') as 'Notas Médicas' FROM clientes ORDER BY id DESC", conn)
         conn.close()
         st.dataframe(df_cli, use_container_width=True)
 
