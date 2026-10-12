@@ -8,7 +8,6 @@ import os
 import base64
 import urllib.parse
 
-# 1. CONFIGURACIÓN Y ESTILOS
 st.set_page_config(
     page_title="Judit Domingo - Centre d'Estètica",
     page_icon="💆‍♀️",
@@ -81,7 +80,6 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. BASE DE DATOS
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -132,7 +130,7 @@ def renderizar_tarjeta_regalo_html(codigo, comprador, beneficiario, concepto, im
         </div>
     </div>
     """
-# 3. MODALES DE CITA
+    # MODALES Y GESTIÓN DE CITAS (CORREGIDO DESFASE HORARIO DE 2H)
 @st.dialog("➕ Agendar Nueva Cita")
 def modal_crear_cita(fecha_por_defecto=None, hora_por_defecto=None):
     conn = sqlite3.connect(DB_NAME)
@@ -180,7 +178,7 @@ def modal_crear_cita(fecha_por_defecto=None, hora_por_defecto=None):
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO citas (fecha_inicio, fecha_fin, cliente_id, servicio_id, notas) VALUES (?,?,?,?,?)",
-                       (dt_ini.isoformat(), dt_fin.isoformat(), c_sel, s_sel, obs))
+                       (dt_ini.strftime("%Y-%m-%dT%H:%M:%S"), dt_fin.strftime("%Y-%m-%dT%H:%M:%S"), c_sel, s_sel, obs))
         conn.commit()
         conn.close()
         st.success("¡Cita agendada correctamente!")
@@ -201,7 +199,7 @@ def modal_editar_cita(cita_id):
 
     f_i, f_f, cl_n, cl_ap, cl_tel, s_n, s_pre, est_c, met_p, monto_c, obs = row
     nom_cli = f"{cl_n} {cl_ap or ''}".strip()
-    dt_i = datetime.datetime.fromisoformat(f_i)
+    dt_i = datetime.datetime.fromisoformat(f_i.replace("Z", ""))
 
     st.markdown(f"### 💆‍♀️ {s_n}")
     st.markdown(f"👤 **Cliente:** {nom_cli}")
@@ -271,7 +269,7 @@ def modal_cobrar_cita(cita_id, cliente_nom, servicio_nom, precio_def):
         conn.close()
         st.success("¡Cobro y factura registrados!")
         st.rerun()
-# 4. INTERFAZ Y NAVEGACIÓN EN 5 BLOQUES
+         # 4. INTERFAZ EN 5 BLOQUES COMPLETOS
 col_h1, col_h2 = st.columns([8, 2])
 with col_h1:
     st.markdown("""
@@ -289,7 +287,7 @@ bloques = st.tabs([
     "📊 Analítica & Legal"
 ])
 
-# BLOQUE 1: AGENDA
+# BLOQUE 1: AGENDA (CON ZONA HORARIA LOCAL SIN DESFASE)
 with bloques[0]:
     col_a1, col_a2 = st.columns([7, 3])
     with col_a1: st.subheader("Agenda de Citas")
@@ -313,12 +311,13 @@ with bloques[0]:
     } for r in citas_db]
 
     cal_opts = {
+        "timeZone": "local",
         "locale": "es", "initialView": "timeGridWeek", "firstDay": 1,
         "slotMinTime": "08:30:00", "slotMaxTime": "20:30:00", "slotDuration": "00:30:00", "height": 700, "selectable": True,
         "headerToolbar": {"left": "prev,next today", "center": "title", "right": "timeGridWeek,timeGridDay"}
     }
 
-    st_cal = calendar(events=events, options=cal_opts, key="app_cal_pro_v3")
+    st_cal = calendar(events=events, options=cal_opts, key="app_cal_pro_v4")
 
     if st_cal.get("eventClick"):
         raw_id = st_cal["eventClick"]["event"]["id"]
@@ -327,8 +326,10 @@ with bloques[0]:
 
     if st_cal.get("dateClick"):
         click_str = st_cal["dateClick"]["date"]
-        f_def = click_str[:10]
-        h_def = click_str[11:16] if len(click_str) >= 16 else "10:00"
+        # Extracción exacta de fecha y hora local sin desfase de zona horaria
+        clean_str = click_str.replace("Z", "").split("+")[0]
+        f_def = clean_str[:10]
+        h_def = clean_str[11:16] if len(clean_str) >= 16 else "10:00"
         modal_crear_cita(f_def, h_def)
 
 # BLOQUE 2: CAJA & FINANZAS
@@ -361,7 +362,7 @@ with bloques[1]:
 
         for cita_h in citas_hoy:
             c_id, f_i, c_nom, c_p_ap, s_nom, s_precio, est_cobro, met_pago, monto_cob = cita_h
-            hora_cita = datetime.datetime.fromisoformat(f_i).strftime("%H:%M")
+            hora_cita = datetime.datetime.fromisoformat(f_i.replace("Z", "")).strftime("%H:%M")
             nom_cliente = f"{c_nom} {c_p_ap or ''}".strip()
 
             col_a, col_b, col_c = st.columns([4, 3, 2])
@@ -394,29 +395,38 @@ with bloques[1]:
         with c_m2: st.markdown(f"<div class='card-metric'><h4>📈 IRPF Estimado (Mod 130)</h4><h2 style='color:#74b9ff;'>{max(0.0, rendimiento_neto*0.2):.2f} €</h2></div>", unsafe_allow_html=True)
         with c_m3: st.markdown(f"<div class='card-metric'><h4>💵 Rendimiento Neto</h4><h2 style='color:#55efc4;'>{rendimiento_neto:.2f} €</h2></div>", unsafe_allow_html=True)
 
-# BLOQUE 3: GESTIÓN DE CENTRO
+# BLOQUE 3: GESTIÓN DE CENTRO (TODAS LAS OPCIONES Y FICHEROS COMPLETOS)
 with bloques[2]:
     tab_g1, tab_g2, tab_g3 = st.tabs(["👤 Fichero Clientes", "💆‍♀️ Tratamientos", "📦 Control Stock"])
 
     with tab_g1:
-        st.subheader("👤 Clientes")
+        st.subheader("👤 Fichero de Clientes")
         with st.expander("➕ Dar de Alta Nueva Clienta"):
-            c_n = st.text_input("Nombre *")
-            c_a = st.text_input("Apellidos")
-            c_t = st.text_input("Móvil (WhatsApp)")
-            c_e = st.text_input("Email")
-            if st.button("💾 Guardar Clienta"):
-                if c_n:
+            col_cli1, col_cli2 = st.columns(2)
+            with col_cli1:
+                c_n = st.text_input("Nombre *")
+                c_a = st.text_input("Primer Apellido")
+                c_a2 = st.text_input("Segundo Apellido")
+                c_t = st.text_input("Móvil (WhatsApp) *")
+            with col_cli2:
+                c_e = st.text_input("Email")
+                c_dni = st.text_input("DNI / NIE")
+                c_fnac = st.text_input("Fecha Nacimiento (AAAA-MM-DD)")
+                c_obs = st.text_input("Notas Clínicas / Alergias")
+
+            if st.button("💾 Guardar Ficha Clienta", type="primary", use_container_width=True):
+                if c_n and c_t:
                     conn = sqlite3.connect(DB_NAME)
                     cursor = conn.cursor()
-                    cursor.execute("INSERT INTO clientes (nombre, primer_apellido, telefono, email) VALUES (?,?,?,?)", (c_n, c_a, c_t, c_e))
+                    cursor.execute("""INSERT INTO clientes (nombre, primer_apellido, segundo_apellido, telefono, email, dni, fecha_nacimiento, info_clinica)
+                                      VALUES (?,?,?,?,?,?,?,?)""", (c_n, c_a, c_a2, c_t, c_e, c_dni, c_fnac, c_obs))
                     conn.commit()
                     conn.close()
-                    st.success("Clienta añadida.")
+                    st.success("¡Clienta registrada!")
                     st.rerun()
 
         conn = sqlite3.connect(DB_NAME)
-        df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email' FROM clientes ORDER BY id DESC", conn)
+        df_cli = pd.read_sql_query("SELECT id, nombre || ' ' || COALESCE(primer_apellido,'') as 'Nombre', telefono as 'Móvil', email as 'Email', info_clinica as 'Notas Médicas' FROM clientes ORDER BY id DESC", conn)
         conn.close()
         st.dataframe(df_cli, use_container_width=True)
 
@@ -430,7 +440,7 @@ with bloques[2]:
     with tab_g3:
         st.subheader("📦 Control de Stock")
         conn = sqlite3.connect(DB_NAME)
-        df_st = pd.read_sql_query("SELECT nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Stock' FROM stock", conn)
+        df_st = pd.read_sql_query("SELECT nombre as 'Producto', categoria as 'Tipo', pvp as 'PVP (€)', unidades as 'Stock', minimo_alerta as 'Alerta Mínima' FROM stock", conn)
         conn.close()
         st.dataframe(df_st, use_container_width=True)
 
@@ -560,4 +570,3 @@ with st.popover("🤖 Bot Asistente (👋)", help="Haz clic para chatear con el 
 
         st.session_state["chat_history"].append({"role": "assistant", "content": resp})
         st.chat_message("assistant").write(resp)
-                
